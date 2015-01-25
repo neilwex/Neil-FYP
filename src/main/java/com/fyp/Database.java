@@ -10,9 +10,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.sql.*;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Scanner;
 
 /**
  * Created by Neil on 15/01/2015.
@@ -34,7 +32,7 @@ public class Database {
     private static String sql;
 
     private static Connection conn = null;
-    private static Statement stmt = null;
+    private static PreparedStatement stmt = null;
 
     protected static void setupConnection() throws SQLException {
 
@@ -50,16 +48,7 @@ public class Database {
 
                 //STEP 4: Execute a query
                 System.out.println("Creating statement...");
-                stmt = conn.createStatement();
-
-                // Testing methods I've created
-                //getAllResults(stmt);
-                //getAverageGrade(stmt);
-                ////getAverageGrade(stmt, "CS101");
-                //getMaxGrade(stmt, "CS101");
-                //getStdDev(stmt, "CS101");
-                //getGPA(stmt,1019);
-                //getMinGrade(stmt, "CS101");
+                //stmt = conn.createStatement();
 
                 //handle exceptions
             } catch (SQLException se) {
@@ -73,13 +62,6 @@ public class Database {
         }
 
     } //end connect
-
-    /*protected static void isConnectionSetup() throws SQLException {
-
-        if (conn == null || !conn.isClosed()) {
-            setupConnection();
-        }
-    }*/
 
     protected static void closeConnection() throws SQLException {
 
@@ -103,6 +85,7 @@ public class Database {
 
         System.out.println("Calling method getAllResults...");
         sql = "SELECT * FROM results";
+        stmt = conn.prepareStatement(sql);
         rs = stmt.executeQuery(sql);
 
         // extract data from result set
@@ -122,33 +105,19 @@ public class Database {
             System.out.println(", Pass/Fail?: " + (ca_mark + final_exam_mark >= PASS_MARK ? "Pass" : "Fail" ));
         }
 
-        //closeConnection();
+        closeConnection();
     }
 
-    public static void getAverageGrade() throws SQLException {
+    public static void getAverageGrade(String module) throws SQLException {
 
         setupConnection();
 
         System.out.println("Calling method getAverageGrade...");
-        sql = "SELECT DISTINCT module_code FROM results";
-        rs = stmt.executeQuery(sql);
-        ArrayList<String> modules = new ArrayList<String>();
-        System.out.print("Please enter an individual module. The available modules are: ");
-        while(rs.next()){
-            modules.add(rs.getString("module_code"));
-            System.out.print(rs.getString("module_code") + " ");
-        }
-        System.out.print("\n");
-        Scanner scanner = new Scanner(System.in);
-        String selected = scanner.next();
 
-        while (! modules.contains(selected)) {
-            System.out.println("Please re-enter a valid selection: ");
-            selected = scanner.next();
-        }
-
-        sql = "SELECT AVG(ca_mark + final_exam_mark) AS average FROM results WHERE module_code = \"" + selected +"\"";
-        rs = stmt.executeQuery(sql);
+        sql = "SELECT AVG(ca_mark + final_exam_mark) AS average FROM results WHERE module_code = ?";
+        stmt = conn.prepareStatement(sql);
+        stmt.setString(1, module);
+        rs = stmt.executeQuery();
         rs.next();
 
         //Retrieve by column name
@@ -163,8 +132,10 @@ public class Database {
         setupConnection();
 
         System.out.println("Calling method getMaxGrade...");
-        sql = "SELECT MAX(ca_mark + final_exam_mark) AS max FROM results WHERE module_code = \"" + module +"\"";
-        rs = stmt.executeQuery(sql);
+        sql = "SELECT MAX(ca_mark + final_exam_mark) AS max FROM results WHERE module_code = ?";
+        stmt = conn.prepareStatement(sql);
+        stmt.setString(1, module);
+        rs = stmt.executeQuery();
         rs.next();
 
         //Retrieve by column name
@@ -179,21 +150,30 @@ public class Database {
         setupConnection();
 
         System.out.println("Calling method getMinGrade...");
-        sql = "SELECT MIN(ca_mark + final_exam_mark) AS min FROM results WHERE module_code = \"" + module +"\"";
-        rs = stmt.executeQuery(sql);
+
+        sql = "SELECT MIN(ca_mark + final_exam_mark) AS min FROM results WHERE module_code = ?";
+        stmt = conn.prepareStatement(sql);
+        stmt.setString(1, "CS101");
+        rs = stmt.executeQuery();
         rs.next();
 
         //Retrieve by column name
         String min  = rs.getString("min");
         System.out.println("Lowest Grade Achieved: " + min);
 
-        //closeConnection();
+        closeConnection();
     }
 
     public static void getStdDev (String module) throws SQLException {
+
+        setupConnection();
+
         System.out.println("Calling method getStdDev...");
-        sql = "SELECT stddev(ca_mark + final_exam_mark) AS stddev FROM results WHERE module_code = \"" + module +"\"";
-        rs = stmt.executeQuery(sql);
+
+        sql = "SELECT stddev(ca_mark + final_exam_mark) AS stddev FROM results WHERE module_code = ?";
+        stmt = conn.prepareStatement(sql);
+        stmt.setString(1, module);
+        rs = stmt.executeQuery();
         rs.next();
 
         //Retrieve by column name
@@ -206,30 +186,19 @@ public class Database {
 
     }
 
-
-    public static void checkGrades() throws SQLException {
-
-        Scanner scanner = new Scanner(System.in);
-        int selected_student;
-        boolean validSelection;
-        do {
-            System.out.println("Please enter the student number for whom data is required:");
-            selected_student = scanner.nextInt();
-
-            sql = "SELECT EXISTS (SELECT * FROM results WHERE student_num = " + selected_student + ");";
-            rs = stmt.executeQuery(sql);
-            rs.next();
-            validSelection = rs.getString(1).equals("1");
-
-        } while (! validSelection);
+    public static void checkGrades(int student) throws SQLException {
 
         System.out.println("Getting student grades information...");
 
         sql = "SELECT SUM(credit_weighting) AS sum FROM modules WHERE code IN " +
-                "(SELECT module_code FROM results WHERE student_num = " + selected_student + ")";
-        rs = stmt.executeQuery(sql);
+                "(SELECT module_code FROM results WHERE student_num = ?)";
+        stmt = conn.prepareStatement(sql);
+        stmt.setInt(1, student);
+        rs = stmt.executeQuery();
         rs.next();
+
         int credits = rs.getInt(1);
+        //int credits = rs.getInt(sum);
         if (credits == 60) {
             System.out.println("Student grades received for correct number of credits");
         } else if (credits < 60) {
@@ -237,16 +206,19 @@ public class Database {
         } else {
             System.out.println("Student appears to have grades for more than 60 credits");
         }
-        System.out.println("System has results for " + credits + " credits for student " + selected_student);
+        System.out.println("System has results for " + credits + " credits for student " + student);
 
-        checkAllGradesPassed(selected_student);
+        checkAllGradesPassed(student);
     }
 
     public static void checkAllGradesPassed (int student_num) throws SQLException {
 
         System.out.println("Checking grades...");
-        sql = "SELECT module_code, ca_mark, final_exam_mark FROM results WHERE student_num = " + student_num + ";";
-        rs = stmt.executeQuery(sql);
+        sql = "SELECT module_code, ca_mark, final_exam_mark FROM results WHERE student_num = ?";
+        stmt = conn.prepareStatement(sql);
+        stmt.setInt(1, student_num);
+        rs = stmt.executeQuery();
+
         boolean allPassed = true;
         // extract data from result set
         while(rs.next()){
@@ -275,14 +247,19 @@ public class Database {
         }
     }
 
-    private static void checkPassByCompensation(int student_num) throws SQLException {
+    protected static void checkPassByCompensation(int student_num) throws SQLException {
+
         System.out.println("Checking grades...");
         sql = "SELECT SUM(credit_weighting) AS sum FROM modules WHERE code IN " +
-                "(SELECT module_code FROM results WHERE student_num = " + student_num + " AND ca_mark + results.final_exam_mark < " + PASS_MARK +")";
+                "(SELECT module_code FROM results WHERE student_num = ? AND ca_mark + results.final_exam_mark < ?)";
 
-        rs = stmt.executeQuery(sql);
+        stmt = conn.prepareStatement(sql);
+        stmt.setInt(1, student_num);
+        stmt.setInt(2, PASS_MARK);
+        rs = stmt.executeQuery();
         rs.next();
-        int creditsFailed = rs.getInt(1);
+
+        int creditsFailed = rs.getInt("sum");
         System.out.println("Student " + student_num + " has failed " + creditsFailed + " credits");
         if (creditsFailed > 10 ) {
             System.out.println("Student has failed more than 10 credits and is therefore" +
@@ -290,8 +267,11 @@ public class Database {
         } else {
 
             sql = "SELECT module_code, ca_mark, final_exam_mark FROM results " +
-                    "WHERE student_num = " + student_num + " AND ca_mark + final_exam_mark < " + PASS_MARK;
-            rs = stmt.executeQuery(sql);
+                     "WHERE student_num = ? AND ca_mark + final_exam_mark < ?";
+            stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, student_num);
+            stmt.setInt(2, PASS_MARK);
+            rs = stmt.executeQuery();
 
             boolean passByComp = true;
             // extract data from result set
@@ -321,9 +301,11 @@ public class Database {
 
         System.out.println("Checking grades...\n");
         sql = "SELECT results.module_code, results.ca_mark + results.final_exam_mark AS total_res, modules.credit_weighting FROM results " +
-                "INNER JOIN modules ON results.module_code =modules.code WHERE student_num = " + student_num + ";";
+                "INNER JOIN modules ON results.module_code =modules.code WHERE student_num = ?";
+        stmt = conn.prepareStatement(sql);
+        stmt.setInt(1, student_num);
+        rs = stmt.executeQuery();
 
-        rs = stmt.executeQuery(sql);
         double totalGPA = 0.0;
         String gpGrade;
         double gpaValue;
@@ -350,9 +332,12 @@ public class Database {
         }
 
         sql = "SELECT SUM(credit_weighting) AS sum FROM modules WHERE code IN " +
-                "(SELECT module_code FROM results WHERE student_num = " + student_num + ");";
+                "(SELECT module_code FROM results WHERE student_num = ?)";
 
-        rs = stmt.executeQuery(sql);
+        stmt = conn.prepareStatement(sql);
+        stmt.setInt(1, student_num);
+        rs = stmt.executeQuery();
+
         rs.next();
         int totalCredits = rs.getInt("sum");
         //System.out.println( "TotalGPA: " + totalGPA );
@@ -363,15 +348,15 @@ public class Database {
         System.out.println("Overall GPA: " + calc.getGPValue(resultGPA) );
     }
 
-    public static void addUser (String uname, String hpwd ) throws SQLException {
+   /* public static void addUser (String uname, String hpwd ) throws SQLException {
         System.out.println("Calling method addUser...");
 
-        sql = "INSERT INTO users (userID, hashPswd) VALUES (' " + uname +"','" + hpwd + "');";
+        sql = "INSERT INTO users (userID, hashPswd) VALUES (?,?' " + uname +"','" + hpwd + "');";
         //INSERT INTO users (userID, hashPswd) VALUES ('asd','asd');
         int outcome = stmt.executeUpdate(sql);
 
         System.out.println(outcome);
-    }
+    }*/
 
     public static boolean createUser(String login, String password)
             throws SQLException, NoSuchAlgorithmException {

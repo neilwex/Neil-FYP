@@ -159,7 +159,15 @@ public class MainUI extends UI{
 
                 try {
                     Database.getAllResults();
+                    Database.getAverageGrade("CS107");
+                    Database.getMaxGrade("CS101");
                     Database.getMinGrade("CS101");
+                    Database.getStdDev("CS102");
+                    Database.checkGrades(1001);
+                    Database.checkAllGradesPassed(1002);
+                    Database.checkPassByCompensation(1019);
+                    Database.checkPassByCompensation(1003);
+                    Database.getGPA(1010);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
