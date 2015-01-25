@@ -9,16 +9,8 @@ import com.vaadin.server.ThemeResource;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.*;
 
-import javax.naming.AuthenticationException;
-import javax.naming.Context;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Hashtable;
-import java.util.LinkedList;
-import java.util.Map;
 
 /**
  * Created by o_connor on 16-Jul-14.
@@ -104,7 +96,7 @@ public class UserLogin extends VerticalLayout implements View {
 
                     System.out.println("\nUsername provided: " + enteredUsername);
 
-                    if ( authenticateLDAPUser() ) {
+                    if ( (true) ) { //authenticateLDAPUser
 
                         //Display window with two buttons
                         displayOptionWindow();
@@ -113,167 +105,6 @@ public class UserLogin extends VerticalLayout implements View {
 
             }
         });
-    }
-
-    /**
-     * Authenticates the user with LDAP using simple authentication
-     * Creates a HashTable containing group name/id, from which user's group is found
-     * Closes the LDAP connection after successful authentication
-     *
-     * @return      true if LDAP authentication is successful; otherwise, false
-     */
-    private boolean authenticateLDAPUser() {
-
-        String ldapURL = "ldap://ocs.embl.org:389";
-        String loginFailed = "Login unsuccessful. Please enter your details again";
-
-        // set up the environment for creating the initial context
-        Hashtable<String, String> anonEnv = new Hashtable<String, String>();
-        anonEnv.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        anonEnv.put(Context.PROVIDER_URL, ldapURL);
-        anonEnv.put(Context.SECURITY_AUTHENTICATION, "none");
-
-        // boolean to record success of method
-        boolean successful = false;
-
-        try {
-
-            // create the initial context with anonymous authentication
-            DirContext ctx = new InitialDirContext(anonEnv);
-
-            try {
-
-                // search for account belonging to provided username
-                SearchControls controls = new SearchControls();
-                controls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-                NamingEnumeration<SearchResult> userSearch = ctx.search("", "(&(objectClass=posixAccount)(uid=" + enteredUsername + "))", controls);
-
-                String posixGroupNumber = "";
-                LinkedList accountsFound = new LinkedList();
-                while (userSearch.hasMore()) {
-                    SearchResult result = userSearch.next();
-                    //System.out.println(result.toString());
-                    accountsFound.add(result.getName());
-
-                    // get the user's group number
-                    Attribute groupIdAttribute = result.getAttributes().get("gidnumber");
-                    if (groupIdAttribute != null) {
-                        posixGroupNumber = (String)groupIdAttribute.get();
-                    }
-                    //System.out.println("Posix Group Number: " + posixGroupNumber);
-
-                    // get the user's email
-                    Attribute mailAttribute = result.getAttributes().get("mail");
-                    user_email = (String) mailAttribute.get();
-                    //System.out.println("User Email: " + user_email);
-                }
-
-                System.out.println("Accounts with given username found: " + accountsFound.size());
-
-                // if exactly one entry is found (with a possix group), use this entry for simple authentication
-                if (accountsFound.size() != 1 || posixGroupNumber.isEmpty() ) {
-                    System.out.println("Account not found");
-                } else {
-                    String dn = accountsFound.get(0).toString();
-                    //System.out.println(dn);
-
-                    try {
-                        // close the original context
-                        ctx.close();
-
-                        // set up the environment for simple authentication
-                        Hashtable<String, String> simpleEnv = new Hashtable<String, String>();
-                        simpleEnv.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-                        simpleEnv.put(Context.PROVIDER_URL, ldapURL);
-                        simpleEnv.put(Context.SECURITY_AUTHENTICATION, "simple");
-                        simpleEnv.put(Context.SECURITY_PRINCIPAL, dn);
-                        simpleEnv.put(Context.SECURITY_CREDENTIALS, enteredPassword);
-
-                        try {
-                            // create the initial context with simple authentication
-                            DirContext ctx2 = new InitialDirContext(simpleEnv);
-
-                            try {
-                                System.out.println("LDAP connection successfully opened");
-
-                                // create HashTable storing groupNames and groupIDs
-                                Hashtable<String, String> groups = new Hashtable<String, String>();
-                                NamingEnumeration<SearchResult> groupSearch = ctx2.search("", "(objectClass=posixGroup)", controls);
-                                while (groupSearch.hasMore()) {
-                                    SearchResult testSearchResult = groupSearch.next();
-                                    Attributes attributes = testSearchResult.getAttributes();
-                                    String groupName = (String) (attributes.get("cn").get());
-                                    if (groupName.equals("cng") ) {
-                                        groupName = "its";
-                                    }
-                                    String gidNumber = (String) (attributes.get("gidnumber").get());
-
-                                    if (!groups.containsKey(gidNumber)) {
-                                        groups.put(gidNumber, groupName); // add if not already in HashTable
-                                    }
-                                }
-                                //printHashTable(groups);
-
-                                // find user's group from the HashTable
-                                if (groups.containsKey(posixGroupNumber)) {
-                                    primary_group = groups.get(posixGroupNumber);
-                                }
-
-                                if (primary_group.isEmpty()) {
-                                    System.out.println("No group associated with user found");
-
-                                } else {
-                                    System.out.print("LDAP Authentication complete ");
-                                    System.out.println("(User " + enteredUsername + " belongs to group: " + primary_group + ")");
-
-                                    try {
-                                        // close the connection
-                                        ctx2.close();
-                                        System.out.println("LDAP connection successfully closed");
-                                        successful = true;
-
-                                    } catch (Exception e) {
-                                        System.out.println("Closing of LDAP connection failed");
-                                        e.printStackTrace();
-                                    }
-                                }
-
-                            } catch (Exception e) {
-                                System.out.println("User/group search failed");
-                                e.printStackTrace();
-                            }
-
-                        } catch (AuthenticationException e) {
-                            System.out.println("Authentication Exception: LDAP connection failed");
-                            e.printStackTrace();
-                        } catch (NamingException ne) {
-                            System.out.println("Naming Exception: LDAP connection failed");
-                            ne.printStackTrace();
-                        }
-
-                    } catch (NamingException e) {
-                        System.out.println("Anonymous context not closed properly!");
-                        e.printStackTrace();
-                    }
-
-                } // end of else
-
-            } catch (NamingException e) {
-                System.out.println("Initial context search failed!");
-                e.printStackTrace();
-            }
-
-        } catch (NamingException e) {
-            System.out.println("Anonymous authentication initial context failed");
-            e.printStackTrace();
-        } finally {
-            if (! successful) {
-                System.out.println("LDAP Authentication Failure");
-                Notification.show(loginFailed);
-            }
-            return successful;
-
-        }
     }
 
     /**
@@ -494,23 +325,6 @@ public class UserLogin extends VerticalLayout implements View {
         loginNameField.removeStyleName("emptyField");
         password.removeStyleName("emptyField");
         return true;
-    }
-
-    /**
-     * Prints out the Hashtable for group ID/name pairs
-     *
-     * @param groups Hashtable containing group ID mapped to group name
-     */
-    private void printHashTable(Hashtable<String, String> groups) {
-
-        System.out.println("Number of HashTable entries: " + groups.size());
-        System.out.println("\nHashTable contents (Group Id: Group Name):");
-        for (Map.Entry<String, String> entry : groups.entrySet()) {
-            String key = entry.getKey();
-            String value = entry.getValue();
-            System.out.println(key + ": " + value);
-        }
-        System.out.println("");
     }
 
 

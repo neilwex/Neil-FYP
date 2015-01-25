@@ -1,8 +1,17 @@
 package com.fyp;
 
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.sql.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 /**
@@ -12,138 +21,89 @@ public class Database {
 
     // JDBC driver name and database URL
     protected static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-
-    //jdbc:mysql://localhost:3306/results_db
     protected static final String DB_URL = "jdbc:mysql://localhost:3306/results_db";
 
-    //  Database credentials
+    // Database credentials
     protected static final String USER = "root";
     protected static final String PASS = "Wexford96-";
-
-    public static ResultSet rs;
-    public static String sql;
 
     protected static final int PASS_MARK = 40;
     protected static final int COMPENSATION_MARK = 30;
 
-    protected static Statement stmt;
+    private static ResultSet rs;
+    private static String sql;
 
-    public static void main(String[] args) {
-        Connection conn = null;
-        stmt = null;
+    private static Connection conn = null;
+    private static Statement stmt = null;
 
-        try{
-            //STEP 2: Register JDBC driver
-            Class.forName(JDBC_DRIVER);
+    protected static void setupConnection() throws SQLException {
 
-            //STEP 3: Open a connection
-            System.out.println("Connecting to database...");
-            conn = DriverManager.getConnection(DB_URL, USER, PASS);
+        if (conn == null || !conn.isClosed()) {
 
-            //STEP 4: Execute a query
-            System.out.println("Creating statement...");
-            stmt = conn.createStatement();
+            try {
+                //STEP 2: Register JDBC driver
+                Class.forName(JDBC_DRIVER);
 
-            addUser(stmt, "Neil", "test");
+                //STEP 3: Open a connection
+                System.out.println("Connecting to database...");
+                conn = DriverManager.getConnection(DB_URL, USER, PASS);
 
-            // Testing methods I've created
+                //STEP 4: Execute a query
+                System.out.println("Creating statement...");
+                stmt = conn.createStatement();
 
-            //getAllResults(stmt);
-            //getAverageGrade(stmt);
-            ////getAverageGrade(stmt, "CS101");
-            //getMaxGrade(stmt, "CS101");
+                // Testing methods I've created
+                //getAllResults(stmt);
+                //getAverageGrade(stmt);
+                ////getAverageGrade(stmt, "CS101");
+                //getMaxGrade(stmt, "CS101");
+                //getStdDev(stmt, "CS101");
+                //getGPA(stmt,1019);
+                //getMinGrade(stmt, "CS101");
 
-            //getStdDev(stmt, "CS101");
-            //checkGrades(stmt);
-
-            //getGPA(stmt,1010);
-
-            //getMinGrade(stmt, "CS101");
-
-            //STEP 6: Clean-up environment
-            //rs.close();
-            //stmt.close();
-            //conn.close();
-        }catch(SQLException se){
-            //Handle errors for JDBC
-            se.printStackTrace();
-        }catch(Exception e){
-            //Handle errors for Class.forName
-            e.printStackTrace();
-        }finally{
-            //finally block used to close resources
-            try{
-                if(stmt!=null)
-                    stmt.close();
-            }catch(SQLException se2){
-            }// nothing we can do
-            try{
-                if(conn!=null)
-                    conn.close();
-            }catch(SQLException se){
+                //handle exceptions
+            } catch (SQLException se) {
+                //Handle errors for JDBC
                 se.printStackTrace();
-            }//end finally try
-        }//end try
-        System.out.println("Goodbye!");
-    }//end main
-
-    public static void connect() throws SQLException {
-        Connection conn = null;
-        Statement stmt = null;
-
-        try{
-            //STEP 2: Register JDBC driver
-            Class.forName(JDBC_DRIVER);
-
-            //STEP 3: Open a connection
-            System.out.println("Connecting to database...");
-            conn = DriverManager.getConnection(DB_URL, USER, PASS);
-
-            //STEP 4: Execute a query
-            System.out.println("Creating statement...");
-            stmt = conn.createStatement();
-
-            // Testing methods I've created
-
-            //getAllResults(stmt);
-            //getAverageGrade(stmt);
-            ////getAverageGrade(stmt, "CS101");
-            //getMaxGrade(stmt, "CS101");
-
-            //getStdDev(stmt, "CS101");
-            //getGPA(stmt,1019);
-
-            //getMinGrade(stmt, "CS101");
-
-
-            //STEP 6: Clean-up environment
-            //rs.close();
-            //stmt.close();
-            //conn.close();
-        }catch(SQLException se){
-            //Handle errors for JDBC
-            se.printStackTrace();
-        }catch(Exception e){
-            //Handle errors for Class.forName
-            e.printStackTrace();
-        }finally{
-            //finally block used to close resources
-            if(stmt!=null) {
-                //stmt.close();
+            } catch (Exception e) {
+                //Handle errors for Class.forName
+                e.printStackTrace();
             }
-            if(conn!=null) {
-                //conn.close();
-            }
-        }//end try
-        System.out.println("Goodbye!");
+
+        }
 
     } //end connect
 
+    /*protected static void isConnectionSetup() throws SQLException {
 
-    public static void getAllResults (Statement s) throws SQLException {
+        if (conn == null || !conn.isClosed()) {
+            setupConnection();
+        }
+    }*/
+
+    protected static void closeConnection() throws SQLException {
+
+        //Clean-up environment
+        if (! rs.isClosed() ){
+            rs.close();
+        }
+        if (! stmt.isClosed() ) {
+            stmt.close();
+        }
+        if (! conn.isClosed() ) {
+            stmt.close();
+        }
+
+        System.out.println("Goodbye!");
+    } //end closeConnection()
+
+    public static void getAllResults() throws SQLException {
+
+        setupConnection();
+
         System.out.println("Calling method getAllResults...");
         sql = "SELECT * FROM results";
-        rs = s.executeQuery(sql);
+        rs = stmt.executeQuery(sql);
 
         // extract data from result set
         while(rs.next()){
@@ -162,12 +122,16 @@ public class Database {
             System.out.println(", Pass/Fail?: " + (ca_mark + final_exam_mark >= PASS_MARK ? "Pass" : "Fail" ));
         }
 
+        //closeConnection();
     }
 
-    public static void getAverageGrade (Statement s) throws SQLException {
+    public static void getAverageGrade() throws SQLException {
+
+        setupConnection();
+
         System.out.println("Calling method getAverageGrade...");
         sql = "SELECT DISTINCT module_code FROM results";
-        rs = s.executeQuery(sql);
+        rs = stmt.executeQuery(sql);
         ArrayList<String> modules = new ArrayList<String>();
         System.out.print("Please enter an individual module. The available modules are: ");
         while(rs.next()){
@@ -184,42 +148,52 @@ public class Database {
         }
 
         sql = "SELECT AVG(ca_mark + final_exam_mark) AS average FROM results WHERE module_code = \"" + selected +"\"";
-        rs = s.executeQuery(sql);
+        rs = stmt.executeQuery(sql);
         rs.next();
 
         //Retrieve by column name
         String average  = rs.getString("average");
         System.out.println("Overall Average: " + average);
 
+        //closeConnection();
     }
 
-    public static void getMaxGrade (Statement s, String module) throws SQLException {
+    public static void getMaxGrade (String module) throws SQLException {
+
+        setupConnection();
+
         System.out.println("Calling method getMaxGrade...");
         sql = "SELECT MAX(ca_mark + final_exam_mark) AS max FROM results WHERE module_code = \"" + module +"\"";
-        rs = s.executeQuery(sql);
+        rs = stmt.executeQuery(sql);
         rs.next();
 
         //Retrieve by column name
         String max  = rs.getString("max");
         System.out.println("Highest Grade Achieved: " + max);
+
+        //closeConnection();
     }
 
-    public static void getMinGrade (Statement s, String module) throws SQLException {
+    public static void getMinGrade (String module) throws SQLException {
+
+        setupConnection();
+
         System.out.println("Calling method getMinGrade...");
         sql = "SELECT MIN(ca_mark + final_exam_mark) AS min FROM results WHERE module_code = \"" + module +"\"";
-        rs = s.executeQuery(sql);
+        rs = stmt.executeQuery(sql);
         rs.next();
 
         //Retrieve by column name
         String min  = rs.getString("min");
         System.out.println("Lowest Grade Achieved: " + min);
 
+        //closeConnection();
     }
 
-    public static void getStdDev (Statement s, String module) throws SQLException {
+    public static void getStdDev (String module) throws SQLException {
         System.out.println("Calling method getStdDev...");
         sql = "SELECT stddev(ca_mark + final_exam_mark) AS stddev FROM results WHERE module_code = \"" + module +"\"";
-        rs = s.executeQuery(sql);
+        rs = stmt.executeQuery(sql);
         rs.next();
 
         //Retrieve by column name
@@ -233,7 +207,7 @@ public class Database {
     }
 
 
-    public static void checkGrades (Statement s) throws SQLException {
+    public static void checkGrades() throws SQLException {
 
         Scanner scanner = new Scanner(System.in);
         int selected_student;
@@ -243,7 +217,7 @@ public class Database {
             selected_student = scanner.nextInt();
 
             sql = "SELECT EXISTS (SELECT * FROM results WHERE student_num = " + selected_student + ");";
-            rs = s.executeQuery(sql);
+            rs = stmt.executeQuery(sql);
             rs.next();
             validSelection = rs.getString(1).equals("1");
 
@@ -253,7 +227,7 @@ public class Database {
 
         sql = "SELECT SUM(credit_weighting) AS sum FROM modules WHERE code IN " +
                 "(SELECT module_code FROM results WHERE student_num = " + selected_student + ")";
-        rs = s.executeQuery(sql);
+        rs = stmt.executeQuery(sql);
         rs.next();
         int credits = rs.getInt(1);
         if (credits == 60) {
@@ -265,14 +239,14 @@ public class Database {
         }
         System.out.println("System has results for " + credits + " credits for student " + selected_student);
 
-        checkAllGradesPassed(s,selected_student);
+        checkAllGradesPassed(selected_student);
     }
 
-    public static void checkAllGradesPassed (Statement s, int student_num) throws SQLException {
+    public static void checkAllGradesPassed (int student_num) throws SQLException {
 
         System.out.println("Checking grades...");
         sql = "SELECT module_code, ca_mark, final_exam_mark FROM results WHERE student_num = " + student_num + ";";
-        rs = s.executeQuery(sql);
+        rs = stmt.executeQuery(sql);
         boolean allPassed = true;
         // extract data from result set
         while(rs.next()){
@@ -295,18 +269,18 @@ public class Database {
 
         if (! allPassed) {
             System.out.println("Student " + student_num + " has not passed all modules");
-            checkPassByCompensation(s,student_num);
+            checkPassByCompensation(student_num);
         } else {
             System.out.println("Student " + student_num + " has passed all modules");
         }
     }
 
-    private static void checkPassByCompensation(Statement s, int student_num) throws SQLException {
+    private static void checkPassByCompensation(int student_num) throws SQLException {
         System.out.println("Checking grades...");
         sql = "SELECT SUM(credit_weighting) AS sum FROM modules WHERE code IN " +
                 "(SELECT module_code FROM results WHERE student_num = " + student_num + " AND ca_mark + results.final_exam_mark < " + PASS_MARK +")";
 
-        rs = s.executeQuery(sql);
+        rs = stmt.executeQuery(sql);
         rs.next();
         int creditsFailed = rs.getInt(1);
         System.out.println("Student " + student_num + " has failed " + creditsFailed + " credits");
@@ -317,7 +291,7 @@ public class Database {
 
             sql = "SELECT module_code, ca_mark, final_exam_mark FROM results " +
                     "WHERE student_num = " + student_num + " AND ca_mark + final_exam_mark < " + PASS_MARK;
-            rs = s.executeQuery(sql);
+            rs = stmt.executeQuery(sql);
 
             boolean passByComp = true;
             // extract data from result set
@@ -343,13 +317,13 @@ public class Database {
 
     }
 
-    public static void getGPA (Statement s, int student_num) throws SQLException {
+    public static void getGPA (int student_num) throws SQLException {
 
         System.out.println("Checking grades...\n");
         sql = "SELECT results.module_code, results.ca_mark + results.final_exam_mark AS total_res, modules.credit_weighting FROM results " +
                 "INNER JOIN modules ON results.module_code =modules.code WHERE student_num = " + student_num + ";";
 
-        rs = s.executeQuery(sql);
+        rs = stmt.executeQuery(sql);
         double totalGPA = 0.0;
         String gpGrade;
         double gpaValue;
@@ -378,7 +352,7 @@ public class Database {
         sql = "SELECT SUM(credit_weighting) AS sum FROM modules WHERE code IN " +
                 "(SELECT module_code FROM results WHERE student_num = " + student_num + ");";
 
-        rs = s.executeQuery(sql);
+        rs = stmt.executeQuery(sql);
         rs.next();
         int totalCredits = rs.getInt("sum");
         //System.out.println( "TotalGPA: " + totalGPA );
@@ -389,14 +363,129 @@ public class Database {
         System.out.println("Overall GPA: " + calc.getGPValue(resultGPA) );
     }
 
-    public static void addUser (Statement s, String uname, String hpwd ) throws SQLException {
+    public static void addUser (String uname, String hpwd ) throws SQLException {
         System.out.println("Calling method addUser...");
 
         sql = "INSERT INTO users (userID, hashPswd) VALUES (' " + uname +"','" + hpwd + "');";
         //INSERT INTO users (userID, hashPswd) VALUES ('asd','asd');
-        int outcome = s.executeUpdate(sql);
+        int outcome = stmt.executeUpdate(sql);
 
         System.out.println(outcome);
+    }
+
+    public static boolean createUser(String login, String password)
+            throws SQLException, NoSuchAlgorithmException {
+        setupConnection();
+
+        PreparedStatement ps = null;
+
+        try {
+
+            // Uses a secure Random not a simple Random
+            SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+            // Salt generation 64 bits long
+            byte[] bSalt = new byte[8];
+            random.nextBytes(bSalt);
+            // Digest computation
+
+            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            digest.reset();
+            digest.update(bSalt);
+
+            byte[] input = digest.digest(password.getBytes("UTF-8"));
+            for (int i = 0; i < 1000; i++) {
+                digest.reset();
+                input = digest.digest(input);
+            }
+
+            byte[] bDigest = input;
+            String sDigest = byteToBase64(bDigest);
+            String sSalt = byteToBase64(bSalt);
+
+            ps = conn.prepareStatement("INSERT INTO users (userID, salt, hashPswd) VALUES (?,?,?)");
+            ps.setString(1, login);
+            ps.setString(2, sSalt);
+            ps.setString(3, sDigest);
+            ps.executeUpdate();
+            return true;
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * From a byte[] returns a base 64 representation
+     * @param data byte[]
+     * @return String
+     * @throws java.io.IOException
+     */
+    public static String byteToBase64(byte[] data){
+        BASE64Encoder endecoder = new BASE64Encoder();
+        return endecoder.encode(data);
+    }
+
+    /**
+     * From a base 64 representation, returns the corresponding byte[]
+     * @param data String The base64 representation
+     * @return byte[]
+     * @throws IOException
+     */
+    public static byte[] base64ToByte(String data) throws IOException {
+        BASE64Decoder decoder = new BASE64Decoder();
+        return decoder.decodeBuffer(data);
+    }
+
+    public static boolean attemptLogin(String user, String password) throws SQLException {
+        setupConnection();
+
+        boolean authenticated=false;
+        PreparedStatement ps = null;
+        try {
+            boolean userExist = true;
+
+            //VALIDATE USER INPUT
+
+            ps = conn.prepareStatement("SELECT hashPswd, salt FROM users WHERE userID = ?");
+            ps.setString(1, user);
+            rs = ps.executeQuery();
+            String digest, salt;
+            if (rs.next()) {
+                digest = rs.getString("hashPswd");
+                salt = rs.getString("salt");
+                // DATABASE VALIDATION
+                if (digest == null || salt == null) {
+                    throw new SQLException("Database inconsistant Salt or Digested Password altered");
+                }
+
+            } else { //no user found with given login name
+
+                return false;
+            }
+
+            byte[] bDigest = base64ToByte(digest);
+            byte[] bSalt = base64ToByte(salt);
+
+            MessageDigest resultDigest = MessageDigest.getInstance("SHA-1");
+            resultDigest.reset();
+            resultDigest.update(bSalt);
+            byte[] input = resultDigest.digest(password.getBytes("UTF-8"));
+            for (int i = 0; i < 1000; i++) {
+                resultDigest.reset();
+                input = resultDigest.digest(input);
+            }
+            System.out.println("Now comparing byte arrays");
+            return Arrays.equals(input, bDigest);
+        } catch (IOException ex){
+            throw new SQLException("Database inconsistant Salt or Digested Password altered");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+
+        }
+
+        return false;
     }
 
 } // end class

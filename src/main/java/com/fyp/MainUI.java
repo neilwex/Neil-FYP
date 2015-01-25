@@ -8,14 +8,16 @@ import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.*;
 
 import javax.servlet.annotation.WebServlet;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
 
 /**
  * Created by o_connor on 28-Jul-14.
  */
 @Theme("mytheme")
 public class MainUI extends UI{
+
+
 
     @WebServlet(value = "/*", asyncSupported = true)
     @VaadinServletConfiguration(productionMode = false, ui = MainUI.class)
@@ -32,6 +34,8 @@ public class MainUI extends UI{
 
     private Button adminButton;
     private Button lecturerButton;
+    private Button registerButton;
+    private Button loginButton;
 
     private String enteredUsername;
     private String enteredPassword;
@@ -58,8 +62,12 @@ public class MainUI extends UI{
         view.addComponent(form);
         adminButton = new Button("admin");
         lecturerButton = new Button("lecturer");
+        registerButton = new Button("register");
+        loginButton = new Button("login");
         form.addComponent(adminButton);
         form.addComponent(lecturerButton);
+        form.addComponent(registerButton);
+        form.addComponent(loginButton);
         setContent(view);
 
         //this.setHeight("400px");
@@ -84,13 +92,61 @@ public class MainUI extends UI{
 
         });
 
+        registerButton.addClickListener(new Button.ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent event) {
+
+                System.out.println("register Button clicked");
+                System.out.println("Attempting to register new user..");
+
+                // check if a user is logged in
+                boolean isLoggedIn = getSession().getAttribute("user") != null;
+
+                if (!isLoggedIn) {
+                    try {
+                        Database.createUser("neil", "test");
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        });
+
+        loginButton.addClickListener(new Button.ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent event) {
+
+                System.out.println("login Button clicked");
+                System.out.println("Attempting to login with credentials...");
+
+                // check if a user is logged in
+                boolean isLoggedIn = getSession().getAttribute("user") != null;
+
+                if (!isLoggedIn) {
+                    boolean loginSuccessful = false;
+                    try {
+                        loginSuccessful = Database.attemptLogin("neil", "test");
+
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+
+                    System.out.println("Login Successful?: " + loginSuccessful);
+                }
+            }
+
+        });
+
         lecturerButton.addClickListener(new Button.ClickListener() {
             @Override
             public void buttonClick(Button.ClickEvent event) {
 
                 System.out.println("Admin Button clicked");
 
-                String passwordToEncrypt = "test";
+               /* String passwordToEncrypt = "test";
                 MessageDigest messageDigest = null;
                 try {
                     messageDigest = MessageDigest.getInstance("SHA-256");
@@ -99,7 +155,14 @@ public class MainUI extends UI{
                 }
                 messageDigest.update(passwordToEncrypt.getBytes());
                 String encryptedString = new String(messageDigest.digest());
-                String uname = "Neil";
+                String uname = "Neil";*/
+
+                try {
+                    Database.getAllResults();
+                    Database.getMinGrade("CS101");
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
 /*
 
                 try {
