@@ -8,6 +8,7 @@ import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.*;
 
 import javax.servlet.annotation.WebServlet;
+import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 
@@ -56,7 +57,7 @@ public class MainUI extends UI{
         HorizontalLayout title = new HorizontalLayout();
         Label heading = new Label("Main Menu");
         title.addComponent(heading);
-        view.addComponent(title);
+        //view.addComponent(title);
         HorizontalLayout form = new HorizontalLayout();
         form.setSpacing(true);
         view.addComponent(form);
@@ -71,7 +72,7 @@ public class MainUI extends UI{
         setContent(view);
 
         //this.setHeight("400px");
-        view.setComponentAlignment(title,Alignment.MIDDLE_CENTER);
+        //view.setComponentAlignment(title,Alignment.MIDDLE_CENTER);
         view.setComponentAlignment(form, Alignment.MIDDLE_CENTER);
         Page.getCurrent().setTitle("Start");
     }
@@ -101,16 +102,20 @@ public class MainUI extends UI{
 
                 // check if a user is logged in
                 boolean isLoggedIn = getSession().getAttribute("user") != null;
-
+                boolean userCreated = false;
                 if (!isLoggedIn) {
                     try {
-                        Database.createUser("neil", "test");
+                        userCreated = Database.createUser("neil", "test");
                     } catch (SQLException e) {
                         e.printStackTrace();
                     } catch (NoSuchAlgorithmException e) {
                         e.printStackTrace();
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
                     }
                 }
+
+                System.out.println("User Created Successfully?: " + userCreated);
             }
 
         });
@@ -128,7 +133,7 @@ public class MainUI extends UI{
                 if (!isLoggedIn) {
                     boolean loginSuccessful = false;
                     try {
-                        loginSuccessful = Database.attemptLogin("neil", "test");
+                        loginSuccessful = Database.attemptLogin("neil", "test!!");
 
                     } catch (SQLException e) {
                         e.printStackTrace();

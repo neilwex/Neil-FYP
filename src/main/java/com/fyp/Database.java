@@ -32,7 +32,7 @@ public class Database {
     private static String sql;
 
     private static Connection conn = null;
-    private static PreparedStatement stmt = null;
+    private static PreparedStatement ps = null;
 
     protected static void setupConnection() throws SQLException {
 
@@ -48,7 +48,7 @@ public class Database {
 
                 //STEP 4: Execute a query
                 System.out.println("Creating statement...");
-                //stmt = conn.createStatement();
+                //ps = conn.createStatement();
 
                 //handle exceptions
             } catch (SQLException se) {
@@ -69,11 +69,11 @@ public class Database {
         if (! rs.isClosed() ){
             rs.close();
         }
-        if (! stmt.isClosed() ) {
-            stmt.close();
+        if (! ps.isClosed() ) {
+            ps.close();
         }
         if (! conn.isClosed() ) {
-            stmt.close();
+            ps.close();
         }
 
         System.out.println("Goodbye!");
@@ -85,8 +85,8 @@ public class Database {
 
         System.out.println("Calling method getAllResults...");
         sql = "SELECT * FROM results";
-        stmt = conn.prepareStatement(sql);
-        rs = stmt.executeQuery(sql);
+        ps = conn.prepareStatement(sql);
+        rs = ps.executeQuery(sql);
 
         // extract data from result set
         while(rs.next()){
@@ -115,9 +115,9 @@ public class Database {
         System.out.println("Calling method getAverageGrade...");
 
         sql = "SELECT AVG(ca_mark + final_exam_mark) AS average FROM results WHERE module_code = ?";
-        stmt = conn.prepareStatement(sql);
-        stmt.setString(1, module);
-        rs = stmt.executeQuery();
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, module);
+        rs = ps.executeQuery();
         rs.next();
 
         //Retrieve by column name
@@ -133,9 +133,9 @@ public class Database {
 
         System.out.println("Calling method getMaxGrade...");
         sql = "SELECT MAX(ca_mark + final_exam_mark) AS max FROM results WHERE module_code = ?";
-        stmt = conn.prepareStatement(sql);
-        stmt.setString(1, module);
-        rs = stmt.executeQuery();
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, module);
+        rs = ps.executeQuery();
         rs.next();
 
         //Retrieve by column name
@@ -152,9 +152,9 @@ public class Database {
         System.out.println("Calling method getMinGrade...");
 
         sql = "SELECT MIN(ca_mark + final_exam_mark) AS min FROM results WHERE module_code = ?";
-        stmt = conn.prepareStatement(sql);
-        stmt.setString(1, "CS101");
-        rs = stmt.executeQuery();
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, "CS101");
+        rs = ps.executeQuery();
         rs.next();
 
         //Retrieve by column name
@@ -171,9 +171,9 @@ public class Database {
         System.out.println("Calling method getStdDev...");
 
         sql = "SELECT stddev(ca_mark + final_exam_mark) AS stddev FROM results WHERE module_code = ?";
-        stmt = conn.prepareStatement(sql);
-        stmt.setString(1, module);
-        rs = stmt.executeQuery();
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, module);
+        rs = ps.executeQuery();
         rs.next();
 
         //Retrieve by column name
@@ -192,9 +192,9 @@ public class Database {
 
         sql = "SELECT SUM(credit_weighting) AS sum FROM modules WHERE code IN " +
                 "(SELECT module_code FROM results WHERE student_num = ?)";
-        stmt = conn.prepareStatement(sql);
-        stmt.setInt(1, student);
-        rs = stmt.executeQuery();
+        ps = conn.prepareStatement(sql);
+        ps.setInt(1, student);
+        rs = ps.executeQuery();
         rs.next();
 
         int credits = rs.getInt(1);
@@ -215,9 +215,9 @@ public class Database {
 
         System.out.println("Checking grades...");
         sql = "SELECT module_code, ca_mark, final_exam_mark FROM results WHERE student_num = ?";
-        stmt = conn.prepareStatement(sql);
-        stmt.setInt(1, student_num);
-        rs = stmt.executeQuery();
+        ps = conn.prepareStatement(sql);
+        ps.setInt(1, student_num);
+        rs = ps.executeQuery();
 
         boolean allPassed = true;
         // extract data from result set
@@ -253,10 +253,10 @@ public class Database {
         sql = "SELECT SUM(credit_weighting) AS sum FROM modules WHERE code IN " +
                 "(SELECT module_code FROM results WHERE student_num = ? AND ca_mark + results.final_exam_mark < ?)";
 
-        stmt = conn.prepareStatement(sql);
-        stmt.setInt(1, student_num);
-        stmt.setInt(2, PASS_MARK);
-        rs = stmt.executeQuery();
+        ps = conn.prepareStatement(sql);
+        ps.setInt(1, student_num);
+        ps.setInt(2, PASS_MARK);
+        rs = ps.executeQuery();
         rs.next();
 
         int creditsFailed = rs.getInt("sum");
@@ -268,10 +268,10 @@ public class Database {
 
             sql = "SELECT module_code, ca_mark, final_exam_mark FROM results " +
                      "WHERE student_num = ? AND ca_mark + final_exam_mark < ?";
-            stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, student_num);
-            stmt.setInt(2, PASS_MARK);
-            rs = stmt.executeQuery();
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, student_num);
+            ps.setInt(2, PASS_MARK);
+            rs = ps.executeQuery();
 
             boolean passByComp = true;
             // extract data from result set
@@ -302,9 +302,9 @@ public class Database {
         System.out.println("Checking grades...\n");
         sql = "SELECT results.module_code, results.ca_mark + results.final_exam_mark AS total_res, modules.credit_weighting FROM results " +
                 "INNER JOIN modules ON results.module_code =modules.code WHERE student_num = ?";
-        stmt = conn.prepareStatement(sql);
-        stmt.setInt(1, student_num);
-        rs = stmt.executeQuery();
+        ps = conn.prepareStatement(sql);
+        ps.setInt(1, student_num);
+        rs = ps.executeQuery();
 
         double totalGPA = 0.0;
         String gpGrade;
@@ -334,9 +334,9 @@ public class Database {
         sql = "SELECT SUM(credit_weighting) AS sum FROM modules WHERE code IN " +
                 "(SELECT module_code FROM results WHERE student_num = ?)";
 
-        stmt = conn.prepareStatement(sql);
-        stmt.setInt(1, student_num);
-        rs = stmt.executeQuery();
+        ps = conn.prepareStatement(sql);
+        ps.setInt(1, student_num);
+        rs = ps.executeQuery();
 
         rs.next();
         int totalCredits = rs.getInt("sum");
@@ -348,55 +348,73 @@ public class Database {
         System.out.println("Overall GPA: " + calc.getGPValue(resultGPA) );
     }
 
-   /* public static void addUser (String uname, String hpwd ) throws SQLException {
-        System.out.println("Calling method addUser...");
-
-        sql = "INSERT INTO users (userID, hashPswd) VALUES (?,?' " + uname +"','" + hpwd + "');";
-        //INSERT INTO users (userID, hashPswd) VALUES ('asd','asd');
-        int outcome = stmt.executeUpdate(sql);
-
-        System.out.println(outcome);
-    }*/
-
-    public static boolean createUser(String login, String password)
-            throws SQLException, NoSuchAlgorithmException {
+    /**
+     * Create new user in database with given credentials
+     * @param newUser new username entered by user
+     * @param newPassword new password entered by user
+     * @return true if new user is successfully created, otherwise false
+     * @throws SQLException, NoSuchAlgorithmException
+     */
+    public static boolean createUser(String newUser, String newPassword)
+            throws SQLException, NoSuchAlgorithmException, UnsupportedEncodingException {
         setupConnection();
 
-        PreparedStatement ps = null;
-
-        try {
-
-            // Uses a secure Random not a simple Random
-            SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
-            // Salt generation 64 bits long
-            byte[] bSalt = new byte[8];
-            random.nextBytes(bSalt);
-            // Digest computation
-
-            MessageDigest digest = MessageDigest.getInstance("SHA-1");
-            digest.reset();
-            digest.update(bSalt);
-
-            byte[] input = digest.digest(password.getBytes("UTF-8"));
-            for (int i = 0; i < 1000; i++) {
-                digest.reset();
-                input = digest.digest(input);
-            }
-
-            byte[] bDigest = input;
-            String sDigest = byteToBase64(bDigest);
-            String sSalt = byteToBase64(bSalt);
-
-            ps = conn.prepareStatement("INSERT INTO users (userID, salt, hashPswd) VALUES (?,?,?)");
-            ps.setString(1, login);
-            ps.setString(2, sSalt);
-            ps.setString(3, sDigest);
-            ps.executeUpdate();
-            return true;
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+        //check if given username already exists in database
+        ps = conn.prepareStatement("SELECT COUNT(*) FROM users WHERE userID = ?");
+        ps.setString(1, newUser);
+        rs = ps.executeQuery();
+        rs.next();
+        if (rs.getInt(1) != 0) { // if rows found, then username already exists
+            System.out.println("Given username already exists");
             return false;
         }
+
+        System.out.println("Given username doesn't already exist");
+        System.out.println("Creating new user...");
+
+        // Uses a secure Random not a simple Random
+        SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+        // 64 bit long salt
+        byte[] salt = new byte[8];
+        random.nextBytes(salt);
+
+        // create hash with newPassword and salt
+        byte[] computedHash = createHash(newPassword, salt);
+
+        // convert to Base64
+        String base64ComputedHash = byteToBase64(computedHash);
+        String base64Salt = byteToBase64(salt);
+
+        // add new details to database
+        ps = conn.prepareStatement("INSERT INTO users (userID, salt, hashPswd) VALUES (?,?,?)");
+        ps.setString(1, newUser);
+        ps.setString(2, base64Salt);
+        ps.setString(3, base64ComputedHash);
+
+        // executeUpdate returns 0 if unsuccessful
+        return ps.executeUpdate() > 0;
+    }
+
+    /**
+     * Creates a hash given a password and salt value
+     * @param password  password provided by user
+     * @param salt      salt value
+     * @return byte[]   the password hash to be stored
+     * @throws NoSuchAlgorithmException     If algorithm doesn't exist
+     * @throws UnsupportedEncodingException
+     */
+    public static byte[] createHash(String password, byte[] salt)
+            throws NoSuchAlgorithmException, UnsupportedEncodingException {
+
+        MessageDigest digest = MessageDigest.getInstance("SHA-1");
+        digest.reset();
+        digest.update(salt);
+        byte[] hash = digest.digest(password.getBytes("UTF-8"));
+        for (int i = 0; i < 1000; i++) {
+            digest.reset();
+            hash = digest.digest(hash);
+        }
+        return hash;
     }
 
     /**
@@ -421,53 +439,57 @@ public class Database {
         return decoder.decodeBuffer(data);
     }
 
-    public static boolean attemptLogin(String user, String password) throws SQLException {
+    /**
+     * Attempt database login with given credentials
+     * @param enteredUser username entered by user
+     * @param enteredPassword password entered by user
+     * @return true if login is successful, otherwise false
+     * @throws SQLException
+     */
+    public static boolean attemptLogin(String enteredUser, String enteredPassword) throws SQLException {
         setupConnection();
 
-        boolean authenticated=false;
-        PreparedStatement ps = null;
         try {
-            boolean userExist = true;
-
             //VALIDATE USER INPUT
 
+            // fetch enteredUser details (if existing) from database
             ps = conn.prepareStatement("SELECT hashPswd, salt FROM users WHERE userID = ?");
-            ps.setString(1, user);
+            ps.setString(1, enteredUser);
             rs = ps.executeQuery();
-            String digest, salt;
-            if (rs.next()) {
-                digest = rs.getString("hashPswd");
-                salt = rs.getString("salt");
-                // DATABASE VALIDATION
-                if (digest == null || salt == null) {
-                    throw new SQLException("Database inconsistant Salt or Digested Password altered");
-                }
 
-            } else { //no user found with given login name
-
+            String storedHash, storedSalt;
+            if (! rs.next()) { // no user found with entered userID
+                System.out.println("No user found with given userID");
                 return false;
+            } else { // user found with entered userID
+
+                //get stored hash and salt values
+                storedHash = rs.getString("hashPswd");
+                storedSalt = rs.getString("salt");
+
+                // DATABASE VALIDATION
+                if (storedHash == null || storedSalt == null) {
+                    throw new SQLException("Database inconsistent Salt or Digested Password altered");
+                }
             }
 
-            byte[] bDigest = base64ToByte(digest);
-            byte[] bSalt = base64ToByte(salt);
+            // convert to base64
+            byte[] base64StoredHash = base64ToByte(storedHash);
+            byte[] base64StoredSalt = base64ToByte(storedSalt);
 
-            MessageDigest resultDigest = MessageDigest.getInstance("SHA-1");
-            resultDigest.reset();
-            resultDigest.update(bSalt);
-            byte[] input = resultDigest.digest(password.getBytes("UTF-8"));
-            for (int i = 0; i < 1000; i++) {
-                resultDigest.reset();
-                input = resultDigest.digest(input);
-            }
+            // create hash with enteredPassword and base64StoredSalt
+            byte[] computedHash = createHash(enteredPassword, base64StoredSalt);
+
             System.out.println("Now comparing byte arrays");
-            return Arrays.equals(input, bDigest);
+            //compare computedHash with base64StoredHash
+            return Arrays.equals(computedHash, base64StoredHash);
+
         } catch (IOException ex){
             throw new SQLException("Database inconsistant Salt or Digested Password altered");
         } catch (SQLException e) {
             e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-
+        } catch (NoSuchAlgorithmException ne) {
+            ne.printStackTrace();
         }
 
         return false;
