@@ -23,7 +23,7 @@ import java.util.Date;
 import java.util.Set;
 
 /**
- * Created by o_connor on 15-Aug-14.
+ * Created by Neil on 22/01/2015.
  */
 @SuppressWarnings("serial")
 public class RetrievingBrowser extends VerticalLayout implements View {

@@ -7,14 +7,14 @@ import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
 /**
- * Created by o_connor on 19-Aug-14.
+ * Created by Neil on 25/01/2015.
  */
 public class LogoutListener extends VerticalLayout implements Button.ClickListener {
 
     private VaadinSession session;
     private final UI ui;
 
-    protected static final String APP_URL = "http://archive.embl.de:8080/archiveApp-1.0/";
+    protected static final String APP_URL = "";
 
     public LogoutListener (VaadinSession session, UI ui) {
         this.session = session;

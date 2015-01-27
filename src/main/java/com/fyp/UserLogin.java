@@ -9,11 +9,11 @@ import com.vaadin.server.ThemeResource;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.*;
 
-import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 
 /**
- * Created by o_connor on 16-Jul-14.
+ * Created by Neil on 20/01/2015.
  */
 @SuppressWarnings("serial")
 public class UserLogin extends VerticalLayout implements View {
@@ -96,10 +96,23 @@ public class UserLogin extends VerticalLayout implements View {
 
                     System.out.println("\nUsername provided: " + enteredUsername);
 
-                    if ( (true) ) { //authenticateLDAPUser
+                    try {
+                        if (Database.attemptLogin(enteredUsername, enteredPassword) ) {
+                            System.out.println("Login Successful!");
+                            navigateToView(ArchivingBrowser.ARCHIVE_BROWSER);
 
-                        //Display window with two buttons
-                        displayOptionWindow();
+                        } else {
+                            System.out.println("Login Failed!");
+                            Notification.show("Login Failed");
+                        }
+
+                        //displayOptionWindow(loginMessage);
+
+                        //if Admin, navigate to Admin page
+
+                        //else (if any other user, navigate to their home page)
+                    } catch (SQLException e) {
+                        e.printStackTrace();
                     }
                 }
 
@@ -111,12 +124,12 @@ public class UserLogin extends VerticalLayout implements View {
      * Displays pop-up window for selecting which application to access
      * Redirects user to correct view based on which button is selected
      */
-    private void displayOptionWindow() {
+    private void displayOptionWindow(String message) {
 
         // create window to allow user to select which task they require
-        final Window optionWindow = new Window("Select application");
+        final Window optionWindow = new Window("Login");
         optionWindow.setModal(true);
-        optionWindow.setClosable(false);
+        //optionWindow.setClosable(false);
         optionWindow.setResizable(false);
         optionWindow.setImmediate(true);
         optionWindow.center();
@@ -129,9 +142,9 @@ public class UserLogin extends VerticalLayout implements View {
 
         // label containing notification info for user
         String notification = "Please select which application you require";
-        Label message = new Label (notification);
-        optionContent.addComponent(message);
-        optionContent.setComponentAlignment(message, Alignment.TOP_CENTER);
+        Label label = new Label (message);
+        optionContent.addComponent(label);
+        optionContent.setComponentAlignment(label, Alignment.TOP_CENTER);
 
         HorizontalLayout buttons = new HorizontalLayout();
         buttons.setSpacing(true);
@@ -139,11 +152,13 @@ public class UserLogin extends VerticalLayout implements View {
 
         Button archiveButton = new Button("Request Archive");
         Button retrieveButton = new Button("Request Retrieval");
+
+        /*
         archiveButton.addStyleName("buttons");
         retrieveButton.addStyleName("buttons");
         buttons.addComponent(archiveButton);
         buttons.addComponent(retrieveButton);
-
+        */
         optionWindow.setContent(optionContent);
         getUI().addWindow(optionWindow);
 
@@ -154,7 +169,7 @@ public class UserLogin extends VerticalLayout implements View {
                 System.out.println("Accessing Archive Application...");
 
                 //attempt mount (if required)
-                if ( mountUserAccountIfRequired() ) {
+                if ( true ) { //mountUserAccountIfRequired
                     navigateToView(ArchivingBrowser.ARCHIVE_BROWSER);
                 }
             }
@@ -171,77 +186,6 @@ public class UserLogin extends VerticalLayout implements View {
         });
     }
 
-    /**
-     * Mounts the user account (if required) using their group and login details
-     *
-     * @return      true if the user mount is not required
-     *              OR if the user mount is required and is successful
-     *              otherwise, returns false
-     */
-    private boolean mountUserAccountIfRequired() {
-
-        // boolean to record success of method
-        boolean successful = true;
-
-        String workingDirectory = System.getProperty("user.dir");
-        System.out.println("Working Directory = " + workingDirectory);
-
-        File file = new File(workingDirectory + "/groupShareMounts/" + primary_group + "/" + enteredUsername);
-
-        // if directory doesn't already exist, create it
-        if (!file.exists()) {
-            System.out.println("Creating directory in which to mount...");
-            boolean result = file.mkdirs();
-            System.out.println(result ? "Directory for mounting created" : "Directory for mounting not created");
-            if (!result) {
-                System.out.println("Problem creating directory");
-                successful = false;
-            }
-        } else if (!file.isDirectory()) {
-            // there is something with this name which is NOT a directory => new dir. can't be created, what to do...
-            System.out.println("File exists but is not a directory...");
-        }
-
-        int directoryContents = file.list().length;
-        //System.out.println("Contents size : " + directoryContents );
-
-        if (successful) {
-            // if no contents, needs to mount
-            if (directoryContents == 0) {
-                System.out.println("Directory contents empty - mount required");
-
-                try {
-
-                    // display window for waiting
-                    CallBack cb = new CallBack();
-                    cb.start();
-
-                    // mount command with user's details
-                    String command = "/usr/bin/smbmount //localhost/storage groupShareMounts/" + primary_group + "/"
-                            + enteredUsername + " -o username=" + enteredUsername + ",password=" + enteredPassword;
-
-                    // create new thread and run the mount command with the user's details
-                    MyThread thread = new MyThread(cb, command, getUI());
-                    thread.start();
-
-
-                } catch (Exception e) {
-                    System.out.println("Mount unsuccessful!");
-                    successful = false;
-                    e.printStackTrace();
-                }
-
-            } else {
-                System.out.println("Directory contents not empty - mount not required");
-            }
-        }
-
-        if (! successful) {
-            Notification.show("Mount unsuccessful!");
-        }
-
-        return successful;
-    }
 
     /**
      * Creates the session information and then navigates to requested view
@@ -252,8 +196,7 @@ public class UserLogin extends VerticalLayout implements View {
 
             // store the current user in the service session
             getSession().setAttribute("user", enteredUsername);
-            getSession().setAttribute("group", primary_group);
-            getSession().setAttribute("email", user_email);
+            //getSession().setAttribute("email", user_email);
 
             // navigate to desired view
             UI.getCurrent().getNavigator().navigateTo(view);

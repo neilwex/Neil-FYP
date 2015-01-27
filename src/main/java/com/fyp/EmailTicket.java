@@ -4,7 +4,7 @@ import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.SimpleEmail;
 
 /**
- * Created by o_connor on 18-Aug-14.
+ * Created by Neil on 27/01/2015.
  */
 public class EmailTicket {
 
@@ -36,7 +36,7 @@ public class EmailTicket {
     public boolean prepareAndSendEmail() {
 
         org.apache.commons.mail.Email email = new SimpleEmail();
-        email.setHostName("smtp.embl.de");
+        ///email.setHostName("smtp.embl.de");
         email.setSmtpPort(25);
 
         try

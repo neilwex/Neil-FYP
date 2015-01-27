@@ -2,23 +2,19 @@ package com.fyp;
 
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
-import com.vaadin.server.Page;
+import com.vaadin.navigator.Navigator;
+import com.vaadin.navigator.ViewChangeListener;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.*;
 
 import javax.servlet.annotation.WebServlet;
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
-import java.sql.SQLException;
 
 /**
- * Created by o_connor on 28-Jul-14.
+ * Created by Neil on 20/01/2015.
  */
 @Theme("mytheme")
 public class MainUI extends UI{
-
-
 
     @WebServlet(value = "/*", asyncSupported = true)
     @VaadinServletConfiguration(productionMode = false, ui = MainUI.class)
@@ -43,8 +39,9 @@ public class MainUI extends UI{
     private String primary_group;
     private String user_email;
 
-    protected static final String LOGIN = "";
-    @Override
+    protected static final String LOGIN = "login";
+
+    /*@Override
     protected void init(VaadinRequest vaadinRequest) {
 
         initLayout();
@@ -151,17 +148,6 @@ public class MainUI extends UI{
 
                 System.out.println("Admin Button clicked");
 
-               /* String passwordToEncrypt = "test";
-                MessageDigest messageDigest = null;
-                try {
-                    messageDigest = MessageDigest.getInstance("SHA-256");
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                }
-                messageDigest.update(passwordToEncrypt.getBytes());
-                String encryptedString = new String(messageDigest.digest());
-                String uname = "Neil";*/
-
                 try {
                     Database.getAllResults();
                     Database.getAverageGrade("CS107");
@@ -176,7 +162,7 @@ public class MainUI extends UI{
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-/*
+*//*
 
                 try {
                     Database.connect();
@@ -184,7 +170,7 @@ public class MainUI extends UI{
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-*/
+*//*
 
 
 
@@ -196,8 +182,8 @@ public class MainUI extends UI{
 
         });
     }
-
-   /* @Override
+*/
+    @Override
     protected void init(VaadinRequest request) {
 
         content = new VerticalLayout();
@@ -252,5 +238,5 @@ public class MainUI extends UI{
         });
 
     }
-*/
-    }
+
+}

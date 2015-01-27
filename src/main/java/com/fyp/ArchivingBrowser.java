@@ -16,6 +16,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+/**
+ * Created by Neil on 25/01/2015.
+ */
 @SuppressWarnings("serial")
 public class ArchivingBrowser extends VerticalLayout implements View, Tree.ExpandListener {
 
@@ -76,15 +79,15 @@ public class ArchivingBrowser extends VerticalLayout implements View, Tree.Expan
         this.setComponentAlignment(root, Alignment.MIDDLE_CENTER);
         Page.getCurrent().setTitle("Archive files");
 
-        /*HorizontalLayout allHeaderInfo = new HorizontalLayout();
+        HorizontalLayout allHeaderInfo = new HorizontalLayout();
         allHeaderInfo.setSizeFull();
-        root.addComponent(allHeaderInfo);
-        allHeaderInfo.setMargin(new MarginInfo(true, true, false, false));
+        //root.addComponent(allHeaderInfo);
+        //allHeaderInfo.setMargin(new MarginInfo(true, true, false, false));
 
         Label testLabel = new Label("THIS IS HEADING");
         testLabel.setWidth(null);
-        allHeaderInfo.addComponent(testLabel);
-        allHeaderInfo.setComponentAlignment(testLabel, Alignment.TOP_LEFT);*/
+        ///allHeaderInfo.addComponent(testLabel);
+        //allHeaderInfo.setComponentAlignment(testLabel, Alignment.TOP_LEFT);
 
         // session information
         sessionInfo = new HorizontalLayout();
@@ -93,16 +96,17 @@ public class ArchivingBrowser extends VerticalLayout implements View, Tree.Expan
         root.setComponentAlignment(sessionInfo, Alignment.TOP_RIGHT);
         sessionInfo.setWidth(null);
         sessionInfo.setMargin(new MarginInfo(true, true, false, false));
+        root.addComponent(sessionInfo);
         //allHeaderInfo.addComponent(sessionInfo);
-        //allHeaderInfo.setComponentAlignment(sessionInfo, Alignment.TOP_RIGHT);
+        root.setComponentAlignment(sessionInfo, Alignment.TOP_RIGHT);
 
         // get session info
         currentUser = session.getAttribute("user").toString();
-        userGroup = session.getAttribute("group").toString();
-        userEmail = session.getAttribute("email").toString();
+        //userGroup = session.getAttribute("group").toString();
+        //userEmail = session.getAttribute("email").toString();
 
         // display session information and logout button
-        userDetails = new Label("Logged in: " + currentUser + " (" + userGroup + ")");
+        userDetails = new Label("Logged in: " + currentUser);
         sessionInfo.addComponent(userDetails);
 
         // logout button
@@ -415,7 +419,7 @@ public class ArchivingBrowser extends VerticalLayout implements View, Tree.Expan
 
         // set up email ticket to be sent
         String from = userEmail;
-        String[] to = new String[]{"neil_77@gtest.embl.de"}; //"itsupport@embl.de"
+        String[] to = new String[]{"example@test.com"}; //neil_77@gtest.embl.de"}; //"itsupport@embl.de"
         String[] cc = new String[]{};
         String subject = "TEST ARCHIVE TICKET";
         boolean copyToWebmaster = false;
