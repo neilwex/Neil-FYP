@@ -355,7 +355,7 @@ public class Database {
      * @return true if new user is successfully created, otherwise false
      * @throws SQLException, NoSuchAlgorithmException
      */
-    public static boolean createUser(String newUser, String newPassword)
+    public static boolean createUser(String newUser, String forename, String surname, String newPassword)
             throws SQLException, NoSuchAlgorithmException, UnsupportedEncodingException {
         setupConnection();
 
@@ -386,10 +386,12 @@ public class Database {
         String base64Salt = byteToBase64(salt);
 
         // add new details to database
-        ps = conn.prepareStatement("INSERT INTO users (userID, salt, hashPswd) VALUES (?,?,?)");
+        ps = conn.prepareStatement("INSERT INTO users (userID, forename, surname, salt, hashPswd) VALUES (?,?,?,?,?)");
         ps.setString(1, newUser);
-        ps.setString(2, base64Salt);
-        ps.setString(3, base64ComputedHash);
+        ps.setString(2, forename);
+        ps.setString(3, surname);
+        ps.setString(4, base64Salt);
+        ps.setString(5, base64ComputedHash);
 
         // executeUpdate returns 0 if unsuccessful
         return ps.executeUpdate() > 0;
@@ -494,5 +496,37 @@ public class Database {
 
         return false;
     }
+
+    public static ResultSet getList (String query) throws SQLException {
+
+        setupConnection();
+
+        System.out.println("Calling method getList...");
+        ps = conn.prepareStatement(query);
+        rs = ps.executeQuery();
+
+        System.out.println("List compiled");
+
+        return rs;
+    }
+
+    public static ResultSet getTabInfo (int accountID) throws SQLException {
+
+        setupConnection();
+
+        System.out.println("Calling method getTabInfo...");
+
+        sql = "SELECT * FROM modules WHERE accountID = ?;";
+
+        sql = "SELECT code, name, credit_weighting, ca_mark_percentage, final_exam_percentage, approved, COUNT(results.student_num) AS num_results" +
+                " FROM modules INNER JOIN results ON results.module_code = modules.code WHERE accountID = ? GROUP BY module_code";
+        ps = conn.prepareStatement(sql);
+        ps.setInt(1, accountID);
+        rs = ps.executeQuery();
+
+        System.out.println("Tab info retrieved");
+        return rs;
+    }
+
 
 } // end class

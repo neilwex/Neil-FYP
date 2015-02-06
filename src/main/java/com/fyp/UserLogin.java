@@ -10,6 +10,7 @@ import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.*;
 
 import java.io.IOException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
@@ -31,6 +32,12 @@ public class UserLogin extends VerticalLayout implements View {
     private String user_email;
 
     protected static final String LOGIN = "";
+    protected static final String ADMIN = "admin";
+
+    protected static String USER_NAME;
+    protected static int USER_ACC_NUM;
+    protected static String USER_FORENAME;
+
 
     @Override
     public void enter(ViewChangeListener.ViewChangeEvent event) {
@@ -63,13 +70,13 @@ public class UserLogin extends VerticalLayout implements View {
         loginForm.addComponent(header);
 
         loginNameField = new TextField("Username");
-        loginNameField.setRequired(true);
-        loginNameField.setRequiredError("Please enter your login name.");
+        //loginNameField.setRequired(true);
+        //loginNameField.setRequiredError("Please enter your login name.");
         loginForm.addComponent(loginNameField);
 
         password = new PasswordField("Password");
-        password.setRequired(true);
-        password.setRequiredError("Please enter your login password.");
+        //password.setRequired(true);
+        //password.setRequiredError("Please enter your login password.");
         password.setNullSettingAllowed(false);
         loginForm.addComponent(password);
 
@@ -96,10 +103,33 @@ public class UserLogin extends VerticalLayout implements View {
 
                     System.out.println("\nUsername provided: " + enteredUsername);
 
+                /*    boolean userCreated = false;
+
+                        try {
+                            userCreated = Database.createUser("cat","Cat","Power","cat");
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        } catch (NoSuchAlgorithmException e) {
+                            e.printStackTrace();
+                        } catch (UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                        }
+
+
+                    System.out.println("User Created Successfully?: " + userCreated);*/
+
                     try {
                         if (Database.attemptLogin(enteredUsername, enteredPassword) ) {
                             System.out.println("Login Successful!");
-                            navigateToView(ArchivingBrowser.ARCHIVE_BROWSER);
+
+                            if (enteredUsername.equals(ADMIN)) {
+                                System.out.println("Navigating to admin home...");
+                                navigateToView(AdminHomeView.ADMIN_HOME);
+                            } else {
+                                System.out.println("Navigating to user (non-admin) home...");
+                                navigateToView(UserHomeView.USER_HOME);
+                                //navigateToView(TestView.TEST_VIEW);
+                            }
 
                         } else {
                             System.out.println("Login Failed!");
@@ -170,7 +200,11 @@ public class UserLogin extends VerticalLayout implements View {
 
                 //attempt mount (if required)
                 if ( true ) { //mountUserAccountIfRequired
-                    navigateToView(ArchivingBrowser.ARCHIVE_BROWSER);
+                    try {
+                        navigateToView(UserHomeView.USER_HOME);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         });
@@ -181,7 +215,11 @@ public class UserLogin extends VerticalLayout implements View {
                 optionWindow.close();
                 System.out.println("Accessing Retrieve Application...");
 
-                navigateToView(RetrievingBrowser.RETRIEVAL_BROWSER);
+                try {
+                    navigateToView(RetrievingBrowser.RETRIEVAL_BROWSER);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -192,11 +230,24 @@ public class UserLogin extends VerticalLayout implements View {
      *
      * @param view  string containing view to which to navigate
      */
-    private void navigateToView(String view) {
+    private void navigateToView(String view) throws SQLException {
 
-            // store the current user in the service session
-            getSession().setAttribute("user", enteredUsername);
-            //getSession().setAttribute("email", user_email);
+            ResultSet userData = Database.getList("SELECT accountID, forename FROM users WHERE userID = \"" + enteredUsername + "\"");
+            userData.next();
+
+            // setup session global details
+            USER_NAME = enteredUsername;
+            USER_ACC_NUM = userData.getInt("accountID");
+            USER_FORENAME = userData.getString("forename");
+
+            // store current user info in the session
+            getSession().setAttribute("user", USER_NAME);
+            getSession().setAttribute("accountID", USER_ACC_NUM);
+            getSession().setAttribute("accountID", USER_FORENAME);
+
+
+            System.out.println(getSession().getAttribute("user").toString());
+            System.out.println(getSession().getAttribute("accountID").toString());
 
             // navigate to desired view
             UI.getCurrent().getNavigator().navigateTo(view);
@@ -254,13 +305,13 @@ public class UserLogin extends VerticalLayout implements View {
         if ( enteredUsername.equals("") ) {
             System.out.println("Username not provided");
             loginNameField.addStyleName("emptyField");
-            loginNameField.getRequiredError();
+            //loginNameField.getRequiredError();
             Notification.show("A username must be provided");
             return false;
         } else if (enteredPassword.equals("") ) {
             System.out.println("Password not provided");
             password.addStyleName("emptyField");
-            password.getRequiredError();
+            //password.getRequiredError();
             Notification.show("A password must be provided");
             return false;
         }

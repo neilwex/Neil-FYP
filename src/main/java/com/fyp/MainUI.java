@@ -192,8 +192,10 @@ public class MainUI extends UI{
         Navigator navigator = new Navigator(this, content);
 
         navigator.addView(UserLogin.LOGIN, UserLogin.class );
-        navigator.addView(ArchivingBrowser.ARCHIVE_BROWSER, ArchivingBrowser.class);
+        navigator.addView(AdminHomeView.ADMIN_HOME, AdminHomeView.class);
+        navigator.addView(UserHomeView.USER_HOME, UserHomeView.class);
         navigator.addView(RetrievingBrowser.RETRIEVAL_BROWSER, RetrievingBrowser.class);
+        //navigator.addView(TestView.TEST_VIEW, TestView.class);
 
         navigator.addViewChangeListener(new ViewChangeListener() {
             @Override
@@ -203,31 +205,31 @@ public class MainUI extends UI{
                 boolean isLoggedIn = getSession().getAttribute("user") != null;
 
                 // check if desired page is the login page
-                boolean isNewViewLoginView = event.getNewView() instanceof UserLogin;
+                boolean isLoginView = event.getNewView() instanceof UserLogin;
 
                 // check what page user was previously on
                 boolean isOldViewRetrieveView = event.getOldView() instanceof RetrievingBrowser;
-                boolean isOldViewArchiveView = event.getOldView() instanceof ArchivingBrowser;
+                boolean isOldViewArchiveView = event.getOldView() instanceof UserHomeView;
 
-                if (!isLoggedIn && !isNewViewLoginView) {
+                if (!isLoggedIn && !isLoginView) {
 
                     // redirect to login view if not already logged in
                     getNavigator().navigateTo(UserLogin.LOGIN);
                     return false;
 
-                } else if (isLoggedIn && isOldViewRetrieveView && !(event.getNewView() instanceof RetrievingBrowser) ) {
+                } else if (isLoggedIn && isLoginView) {
 
                     // redirect user to Retrieve page
-                    getNavigator().navigateTo(RetrievingBrowser.RETRIEVAL_BROWSER);
+                    getNavigator().navigateTo(UserHomeView.USER_HOME);
                     Notification.show("You are already logged in");
                     return false;
-                } else if (isLoggedIn && isOldViewArchiveView && !(event.getNewView() instanceof ArchivingBrowser) ) {
+                } /*else if (isLoggedIn && isOldViewArchiveView && !(event.getNewView() instanceof UserHomeView) ) {
 
                     // redirect user to Archive page
-                    getNavigator().navigateTo(ArchivingBrowser.ARCHIVE_BROWSER);
+                    getNavigator().navigateTo(UserHomeView.USER_HOME);
                     Notification.show("You are already logged in");
                     return false;
-                }
+                }*/
 
                 return true;
             }

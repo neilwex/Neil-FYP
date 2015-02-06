@@ -52,14 +52,32 @@
   .heading {
     font-weight: bold;
     font-size: 16px;
-    text-decoration: underline;
+    //text-decoration: underline;
     margin-bottom: 15px;
   }
 
   .panel {
-    margin: 2px;
+    //margin: 2px;
+    margin-left: 100px;
+    margin-top: 23px;
     border: 2px;
     background-color: none;
+  }
+
+  //.grid.v-margin-left   {padding-left:   20px;}
+  .mymargins.v-margin-right  {padding-right:  20px;}
+  .mymargins.v-margin-top    {padding-top:    40px;}
+  .mymargins.v-margin-bottom {padding-bottom: 80px;}
+  .grid {
+    //margin: 10px;
+  }
+
+  .instructions {
+    //margin-bottom: 50px;
+  }
+
+  div.v-verticallayout.v-layout.v-vertical.v-widget.v-has-width > div > div > div > div > div:nth-child(2) > div > div.v-slot.v-slot-panel {
+    margin-top: 25px;
   }
 
   .retrievalContent {
