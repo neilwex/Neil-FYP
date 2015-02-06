@@ -46,6 +46,8 @@ public class UserHomeView extends VerticalLayout implements View {
     private Button getReport;
 
     protected String currentTab;
+    private ArrayList<String> notApprovedModules;
+    private HorizontalLayout buttons;
 
     protected static final String USER_HOME = "userHome";
     private StreamResource myResource;
@@ -74,8 +76,8 @@ public class UserHomeView extends VerticalLayout implements View {
         root = new VerticalLayout();
         root.addStyleName("mainContent");
         root.setSizeFull();
+        root.setSpacing(true);
         addComponent(root);
-        //this.setHeight("200px");
         this.setComponentAlignment(root, Alignment.MIDDLE_CENTER);
         Page.getCurrent().setTitle("User Home");
 
@@ -154,9 +156,10 @@ public class UserHomeView extends VerticalLayout implements View {
         }*/
 
         final TabSheet tabsheet = new TabSheet();
+        tabsheet.setHeight("300px");
         hLayout.addComponent(tabsheet);
         final ResultSet moduleInfo = Database.getTabInfo(UserLogin.USER_ACC_NUM);
-
+        notApprovedModules = new ArrayList<String>();
         while (moduleInfo.next()) {
             final String code = moduleInfo.getString("code");
 
@@ -170,6 +173,7 @@ public class UserHomeView extends VerticalLayout implements View {
             if ( !moduleInfo.getBoolean("approved") ) {
                 //module not approved yet, so display warning message
                 grid.addComponent(new Label("This module has not yet been approved by the administrator", ContentMode.TEXT));
+                notApprovedModules.add(code);
 
             } else {
 
@@ -184,52 +188,15 @@ public class UserHomeView extends VerticalLayout implements View {
                 grid.addComponent(new Label(moduleInfo.getString("final_exam_percentage") + "%"));
                 grid.addComponent(new Label("Results Submitted:"));
                 grid.addComponent(new Label(moduleInfo.getString("num_results")));
-
-                /*//add buttons with their respective click listeners
-                grid.addComponent(new Button("Download Template", new Button.ClickListener() {
-                    @Override
-                    public void buttonClick(Button.ClickEvent clickEvent) {
-                        System.out.println("Download Template button clicked for " + code);
-
-                        displaySummaryWindow(code);
-
-                    }
-                }), 1, 7, 1, 7);
-
-                grid.addComponent(new Button("Upload Results", new Button.ClickListener() {
-                    @Override
-                    public void buttonClick(Button.ClickEvent clickEvent) {
-                        System.out.println("Upload Results button clicked for " + code);
-                        //method for uploading results here
-                    }
-                }), 1, 8, 1, 8);
-
-                grid.addComponent(new Button("Get Report", new Button.ClickListener() {
-                    @Override
-                    public void buttonClick(Button.ClickEvent clickEvent) {
-                        System.out.println("Get Report button clicked for " + code);
-                        //method for generating report here
-                    }
-                }), 1,9,1,9);*/
-
-                //grid.addComponent(heading, 0, 0, 1, 0);
-                //new Label("Module: " + module + ", Credits: " + credits + ", CA: " + ca + ", Exam: " +exam, ContentMode.TEXT));
             }
+
             grid.setCaption(code);
             tabsheet.addTab(grid);
-            //tabsheet.addTab(grid,  code);
         }
 
-        currentTab = tabsheet.getTab(0).getCaption();
+        System.out.println("notApprovedModules size = " + notApprovedModules.size());
 
-        tabsheet.addSelectedTabChangeListener(new TabSheet.SelectedTabChangeListener() {
-            @Override
-            public void selectedTabChange(TabSheet.SelectedTabChangeEvent event) {
-                currentTab = event.getTabSheet().getSelectedTab().getCaption();
-                System.out.println("currentTab updated");
-                System.out.println(event.getTabSheet().getSelectedTab().getCaption());
-            }
-        });
+        currentTab = tabsheet.getTab(0).getCaption();
 
         downloadTemplate = new Button("Download Template");
         uploadTemplate = new Button("Upload Results");
@@ -239,19 +206,34 @@ public class UserHomeView extends VerticalLayout implements View {
         fileDownloader = new FileDownloader(myResource);
         fileDownloader.extend(downloadTemplate);
 
-        root.addComponent(downloadTemplate);
-        root.addComponent(uploadTemplate);
-        root.addComponent(getReport);
+        buttons = new HorizontalLayout();
+        buttons.setSpacing(true);
+
+        root.addComponent(buttons);
+        buttons.addComponent(downloadTemplate);
+        buttons.addComponent(uploadTemplate);
+        buttons.addComponent(getReport);
 
         downloadTemplate.addClickListener(new Button.ClickListener() {
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 System.out.println(tabsheet.getSelectedTab().getCaption());
-                //createResource("test");
             }
         });
 
 
+        tabsheet.addSelectedTabChangeListener(new TabSheet.SelectedTabChangeListener() {
+            @Override
+            public void selectedTabChange(TabSheet.SelectedTabChangeEvent event) {
+                currentTab = event.getTabSheet().getSelectedTab().getCaption();
+                if (notApprovedModules.contains(currentTab) ) {
+                    buttons.setVisible(false);
+                } else {
+                    buttons.setVisible(true);
+                }
+                System.out.println("currentTab updated to: " + event.getTabSheet().getSelectedTab().getCaption());
+            }
+        });
 
 /*
         confirmationButtons.addComponent(confirmButton);
@@ -299,6 +281,11 @@ public class UserHomeView extends VerticalLayout implements View {
         VerticalLayout v = new VerticalLayout();
 
         panel.setContent(new Label("Test"));*/
+
+        currentTab = tabsheet.getTab(0).getCaption();
+        if (notApprovedModules.contains(currentTab) ) {
+            buttons.setVisible(false);
+        }
     }
 
     private StreamResource createResource() {
@@ -318,18 +305,17 @@ public class UserHomeView extends VerticalLayout implements View {
                     FileInputStream fileInputStream = new FileInputStream(file);
                     fileInputStream.read(b);
 
-                    } catch (FileNotFoundException e) {
+                } catch (FileNotFoundException e) {
                         System.out.println("File Not Found.");
                         e.printStackTrace();
                         return null;
-                    }
-                    catch (IOException e) {
+                } catch (IOException e) {
                         System.out.println("Error Reading The File.");
                         e.printStackTrace();
                         return null;
-                    }
+                }
 
-                    return new ByteArrayInputStream(b);
+                return new ByteArrayInputStream(b);
             }
         }, currentTab + ".ods");
     }

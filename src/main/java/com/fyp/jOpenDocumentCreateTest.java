@@ -5,6 +5,7 @@ import org.jopendocument.dom.spreadsheet.SpreadSheet;
 
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -37,9 +38,15 @@ public class jOpenDocumentCreateTest {
 
         TableModel model = new DefaultTableModel(null, columns);
 
+
+
         // Save the data to an ODS file and open it.
         final File file = new File("results.ods");
         SpreadSheet.createEmpty(model).saveAs(file);
+
+        Sheet sheet = SpreadSheet.createFromFile(file).getSheet(0);
+        sheet.getCellAt("A1").setBackgroundColor(Color.RED);
+        sheet.getSpreadSheet().saveAs(file);
         System.out.println("New spreadsheet created");
         return file;
         //OOUtils.open(file);
