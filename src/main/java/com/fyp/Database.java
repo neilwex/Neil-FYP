@@ -309,7 +309,7 @@ public class Database {
         double totalGPA = 0.0;
         String gpGrade;
         double gpaValue;
-        GPACalculator calc = new GPACalculator();
+        GradeCalculator calc = new GradeCalculator();
 
         // extract data from result set
         while (rs.next()) {
@@ -516,8 +516,6 @@ public class Database {
 
         System.out.println("Calling method getTabInfo...");
 
-        sql = "SELECT * FROM modules WHERE accountID = ?;";
-
         sql = "SELECT code, name, credit_weighting, ca_mark_percentage, final_exam_percentage, approved, COUNT(results.student_num) AS num_results" +
                 " FROM modules INNER JOIN results ON results.module_code = modules.code WHERE accountID = ? GROUP BY module_code";
         ps = conn.prepareStatement(sql);
@@ -528,5 +526,72 @@ public class Database {
         return rs;
     }
 
+    public static ResultSet getModuleInfo (String module) throws SQLException {
+        setupConnection();
+
+        System.out.println("Calling method getModuleInfo...");
+
+        sql = "SELECT * FROM ( " +
+                "SELECT student_num, ca_mark, final_exam_mark, (ca_mark + final_exam_mark) AS total, rank FROM " +
+                  "(SELECT ca_mark, final_exam_mark, student_num, " +
+                    "@curRank := IF(@prevRank = (ca_mark + final_exam_mark), @curRank, @incRank) AS rank, " +
+                    "@incRank := @incRank + 1, " +
+                    "@prevRank := ca_mark + final_exam_mark " +
+                  "FROM results p, ( SELECT @curRank :=0, @prevRank := NULL, @incRank := 1) r " +
+                "WHERE module_code = ? " +
+                "ORDER BY ca_mark + final_exam_mark DESC) s" +
+              ") q ORDER BY student_num";
+
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, module);
+        rs = ps.executeQuery();
+
+        System.out.println("Module info retrieved");
+        return rs;
+    }
+
+    public static ResultSet getModuleAverages(String code) throws SQLException {
+
+        setupConnection();
+
+        System.out.println("Calling method getModuleInfo...");
+
+        sql = "SELECT AVG(ca_mark) AS ca, AVG(final_exam_mark) AS exam, AVG(ca_mark + final_exam_mark) AS total," +
+                "STDDEV(ca_mark + final_exam_mark) AS stddev, MIN(ca_mark+final_exam_mark) AS min, MAX(ca_mark+final_exam_mark) AS max " +
+                "FROM results WHERE module_code = ?";
+
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, code);
+        rs = ps.executeQuery();
+
+        System.out.println("Module averages retrieved");
+        return rs;
+
+    }
+
+
+    public static int getNumStudents(String module) throws SQLException {
+
+        sql = "SELECT COUNT(student_num) AS count FROM results WHERE module_code = ?";
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, module);
+        rs = ps.executeQuery();
+        rs.next();
+
+        //Retrieve by column name
+        return rs.getInt("count");
+    }
+
+    public static int getCredits(String code) throws SQLException {
+
+        sql = "SELECT credit_weighting FROM modules WHERE code = ?";
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, code);
+        rs = ps.executeQuery();
+        rs.next();
+
+        //Retrieve by column name
+        return rs.getInt(1);
+    }
 
 } // end class

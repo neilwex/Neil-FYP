@@ -24,11 +24,11 @@
     font-weight: bold;
   }
 
-  .buttons .v-button-caption {
+  .buttons .v-button-caption, .v-upload .v-button .v-button-caption, .v-tabsheet .v-button .v-button-caption {
     font-weight: bold;
   }
 
-  .buttons:hover span span  {
+  .buttons:hover span span, .v-upload .v-button:hover span span, .v-tabsheet .v-button:hover span span {
     color: darkblue;
   }
 
