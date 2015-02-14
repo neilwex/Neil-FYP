@@ -650,4 +650,7 @@ public class Database {
         return rs.getInt(1) > 0;
     }
 
+    public static ResultSet getResults(String module) {
+        return null;
+    }
 } // end class

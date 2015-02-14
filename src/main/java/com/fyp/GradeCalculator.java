@@ -4,6 +4,7 @@ package com.fyp;
  * Created by Neil on 18/01/2015.
  */
 public class GradeCalculator {
+
     static double [] lowerbound =  {76.67, 73.33, 70.00, 66.67, 63.33, 60.00, 56.67, 53.33, 50.00, 46.67, 43.33,
             40.00, 36.67, 33.33, 30.00, 26.67, 23.33, 20.00, 16.67, 13.33, 00.02, 00.00 };
 

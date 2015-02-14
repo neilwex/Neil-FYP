@@ -1,6 +1,7 @@
 package com.fyp;
 
 import com.vaadin.data.Property;
+import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.data.util.converter.Converter;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
@@ -9,8 +10,10 @@ import com.vaadin.server.Page;
 import com.vaadin.server.StreamResource;
 import com.vaadin.server.VaadinSession;
 import com.vaadin.shared.ui.MarginInfo;
+import com.vaadin.shared.ui.MultiSelectMode;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.*;
+import org.tepi.filtertable.FilterTable;
 
 import java.io.*;
 import java.sql.ResultSet;
@@ -43,6 +46,11 @@ public class UserHomeView extends VerticalLayout implements View {
     private FileDownloader templateDownloader;
     private FileDownloader reportDownloader;
 
+    private com.vaadin.data.Container container;
+    private FilterTable table;
+    private Window resultsWindow;
+    private VerticalLayout resultsContent;
+
     @Override
     public void enter(ViewChangeListener.ViewChangeEvent event) {
 
@@ -53,7 +61,6 @@ public class UserHomeView extends VerticalLayout implements View {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -78,8 +85,8 @@ public class UserHomeView extends VerticalLayout implements View {
         root.setComponentAlignment(sessionInfo, Alignment.TOP_RIGHT);
         sessionInfo.setWidth(null);
         sessionInfo.setMargin(new MarginInfo(true, true, false, false));
-        root.addComponent(sessionInfo);
-        root.setComponentAlignment(sessionInfo, Alignment.TOP_RIGHT);
+        //root.addComponent(sessionInfo);
+        //root.setComponentAlignment(sessionInfo, Alignment.TOP_RIGHT);
 
         // display session information and logout button
         userDetails = new Label("Logged in: " + UserLogin.USER_NAME);
@@ -131,7 +138,7 @@ public class UserHomeView extends VerticalLayout implements View {
             final String code = moduleInfo.getString("code");
 
             // setup grid layout for each tab
-            GridLayout grid = new GridLayout(2, 8);
+            GridLayout grid = new GridLayout(2, 9);
             grid.setMargin(new MarginInfo(true,false,false,false));
             grid.addStyleName("grid");
             grid.setSpacing(true);
@@ -175,6 +182,13 @@ public class UserHomeView extends VerticalLayout implements View {
                 reportResource = createResource(code);
                 reportDownloader = new FileDownloader(reportResource);
                 reportDownloader.extend((AbstractComponent) grid.getComponent(0, 7));
+
+                grid.addComponent(new Button("View Results", new Button.ClickListener() {
+                    @Override
+                    public void buttonClick(Button.ClickEvent clickEvent) {
+                        displayResultsWindow();
+                    }
+                }),0,8);
             }
 
             grid.setCaption(code);
@@ -196,6 +210,88 @@ public class UserHomeView extends VerticalLayout implements View {
 
         currentTab = tabsheet.getTab(0).getCaption();
     }
+
+    private void displayResultsWindow() {
+
+        // Create a sub-window and set the content
+        resultsWindow = new Window("View Results");
+        resultsContent = new VerticalLayout();
+        resultsContent.setMargin(true);
+        resultsContent.setSpacing(true);
+        resultsWindow.setWidth("-1px");
+        resultsWindow.setHeight("-1px");
+
+        resultsWindow.setModal(true);
+        resultsWindow.setResizable(false);
+        resultsWindow.setContent(resultsContent);
+        resultsWindow.center();
+        resultsWindow.setImmediate(true);
+
+        // Create an indexed container and fill it with columns for the table
+        container = new IndexedContainer();
+
+        // Define the names and data types of columns
+        container.addContainerProperty("Student Number", String.class, null);
+        container.addContainerProperty("CA", Integer.class, null);
+        container.addContainerProperty("Exam", Integer.class, null);
+        container.addContainerProperty("Result", Integer.class, null);
+
+        try {
+            createAndFillTable();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Open window in the UI
+        getUI().addWindow(resultsWindow);
+    }
+
+    /**
+     * Create the table, add the container to it and populate
+     */
+    private void createAndFillTable() throws SQLException {
+
+        table = new FilterTable();
+        table.setContainerDataSource(container);
+        table.setWidth("100%");
+        table.setSelectable(true);
+        table.setMultiSelect(true);
+        table.setImmediate(true);
+        table.setMultiSelectMode(MultiSelectMode.SIMPLE);
+        table.setFilterBarVisible(true);
+        //table.setColumnWidth(DATE, 240);
+
+        fillTable();
+
+        resultsContent.addComponent(table);
+        resultsContent.setComponentAlignment(table, Alignment.MIDDLE_CENTER);
+    }
+
+    /**
+     * Fills the contents of the container with results data from database, for use in table
+     */
+    private void fillTable() throws SQLException {
+
+        ResultSet results = Database.getModuleResults(currentTab);
+
+        while (results.next()) {
+
+            String studentNum = results.getString("student_num");
+
+            // add details as a row to table
+            container.addItem(studentNum);
+            container.getContainerProperty(studentNum, "Student Number").setValue(studentNum);
+            container.getContainerProperty(studentNum, "CA").setValue(results.getInt("ca_mark"));
+            container.getContainerProperty(studentNum, "Exam").setValue(results.getInt("final_exam_mark"));
+            container.getContainerProperty(studentNum, "Result").setValue(results.getInt("total"));
+            //container.getContainerProperty(studentNum, "Percent", Doubl).setValue(fileName);
+
+        }
+
+
+    }
+
+
 
     private StreamResource createResource(final String code) {
         String filename = code + "Report.ods";
@@ -575,7 +671,7 @@ public class UserHomeView extends VerticalLayout implements View {
                               "You have requested for your selected file to be ... after archiving";
         Label fileStatusText = new Label(notification, ContentMode.HTML);
 
-        // Open pop-up in the UI
+        // Open window in the UI
         getUI().addWindow(addNewModuleWindow);
     }
 

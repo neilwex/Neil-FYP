@@ -59,7 +59,7 @@ public class jOpenDocumentCreateTest {
     public File createReport(int num_students, int credits, ResultSet rows, ResultSet moduleInfo) throws SQLException, IOException {
 
         //create new spreadsheet for report
-        final File file = new File("root\\results.ods");
+        final File file = new File("files\\results.ods");
         SpreadSheet.create(2,10,num_students + 10).saveAs(file);
         Sheet sheet = SpreadSheet.createFromFile(file).getSheet(0);
 

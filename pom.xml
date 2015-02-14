@@ -86,7 +86,7 @@
         <dependency>
             <groupId>org.vaadin.addons</groupId>
             <artifactId>filteringtable</artifactId>
-            <version>0.9.10.v7</version>
+            <version>0.9.11.v7</version>
         </dependency>
 
 		<dependency>
@@ -126,13 +126,13 @@
 				<version>${vaadin.plugin.version}</version>
 				<configuration>
 					<extraJvmArgs>-Xmx512M -Xss1024k</extraJvmArgs>
-					<!-- <runTarget>mobilemail</runTarget> -->
-					<!-- We are doing "inplace" but into subdir VAADIN/widgetsets. This 
+					 <runTarget>clean</runTarget>
+					<!-- We are doing "inplace" but into subdir VAADIN/widgetsets. This
 						way compatible with Vaadin eclipse plugin. -->
-					<!--<webappDirectory>${basedir}/src/main/webapp/VAADIN/widgetsets
+					<webappDirectory>${basedir}/src/main/webapp/VAADIN/widgetsets
 					</webappDirectory>
 					<hostedWebapp>${basedir}/src/main/webapp/VAADIN/widgetsets
-					</hostedWebapp>-->
+					</hostedWebapp>
 					<!-- Most Vaadin apps don't need this stuff, guide that to target -->
 					<persistentunitcachedir>${project.build.directory}</persistentunitcachedir>
 					<deploy>${project.build.directory}/gwt-deploy</deploy>
