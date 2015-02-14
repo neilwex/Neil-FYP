@@ -502,7 +502,7 @@ public class Database {
         System.out.println("Calling method getModuleStats...");
 
         sql = "SELECT code, name, credit_weighting, ca_mark_percentage, final_exam_percentage, approved, COUNT(results.student_num) AS num_results" +
-                " FROM modules INNER JOIN results ON results.module_code = modules.code WHERE accountID = ? GROUP BY module_code";
+                " FROM modules LEFT JOIN results ON results.module_code = modules.code WHERE accountID = ? GROUP BY code";
         ps = conn.prepareStatement(sql);
         ps.setInt(1, accountID);
         rs = ps.executeQuery();
@@ -613,6 +613,41 @@ public class Database {
         }
 
         return true;
+    }
+
+    public static boolean addNewModule(String code, String title, String credits, String ca, String exam, int accountID) throws SQLException {
+
+        setupConnection();
+
+        System.out.println("Calling method addNewModule...");
+
+        sql = "INSERT INTO modules VALUES (?,?,?,?,?,?,0);";
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, code);
+        ps.setString(2, title);
+        ps.setInt(3, Integer.parseInt(credits));
+        ps.setInt(4, Integer.parseInt(ca));
+        ps.setInt(5, Integer.parseInt(exam));
+        ps.setInt(6, accountID);
+
+        // executeUpdate returns 0 if unsuccessful
+        return ps.executeUpdate() > 0;
+    }
+
+    public static boolean checkModuleCode(String moduleCode) throws SQLException {
+
+        setupConnection();
+
+        System.out.println("Calling method addNewModule...");
+
+        sql = "SELECT COUNT(code) AS count FROM modules WHERE code = ?";
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, moduleCode);
+        rs = ps.executeQuery();
+        rs.next();
+
+        // re.getInt(1) returns the number of modules existing with code moduleCode
+        return rs.getInt(1) > 0;
     }
 
 } // end class

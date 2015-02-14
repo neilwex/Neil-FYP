@@ -378,10 +378,29 @@ public class UserHomeView extends VerticalLayout implements View {
 
         final TextField moduleCode = new TextField("Module Code");
         form.addComponent(moduleCode);
+        moduleCode.addValueChangeListener(new Property.ValueChangeListener() {
+            @Override
+            public void valueChange(Property.ValueChangeEvent valueChangeEvent) {
+
+                if (! moduleCode.getValue().trim().isEmpty()) {
+                    moduleCode.removeStyleName("emptyField");
+                }
+            }
+        });
+
         final TextField moduleTitle = new TextField("Module Title");
         form.addComponent(moduleTitle);
+        moduleTitle.addValueChangeListener(new Property.ValueChangeListener() {
+            @Override
+            public void valueChange(Property.ValueChangeEvent valueChangeEvent) {
 
-        ComboBox creditCombo = new ComboBox("Credit Weighting");
+                if (! moduleTitle.getValue().trim().isEmpty()) {
+                    moduleTitle.removeStyleName("emptyField");
+                }
+            }
+        });
+
+        final ComboBox creditCombo = new ComboBox("Credit Weighting");
         form.addComponent(creditCombo);
 
         // Add selections for combo box
@@ -410,15 +429,16 @@ public class UserHomeView extends VerticalLayout implements View {
         ca.addValueChangeListener(new Property.ValueChangeListener() {
             @Override
             public void valueChange(Property.ValueChangeEvent event) {
+                System.out.println("CA new value is: " + ca.getValue());
 
                 try {
                     int newValue;
-
-                    if (ca.getValue() == null || ca.getValue().trim().isEmpty() ) {
+                    if (ca.getValue() == null || ca.getValue().trim() == null || ca.getValue().trim().isEmpty() ) {
                         newValue = 0 ;
                     } else {
                         newValue = (Integer) ca.getConvertedValue();
                     }
+
                     int examValue = 100 - newValue;
                     if (examValue > 100 || examValue < 0) {
                         ca.addStyleName("emptyField");
@@ -427,8 +447,9 @@ public class UserHomeView extends VerticalLayout implements View {
                         ca.removeStyleName("emptyField");
                         exam.setValue(Integer.toString(examValue));
                     }
-                } catch (Converter.ConversionException e) {
-                    Notification.show("Invalid format: Please enter a number 0-100 ");
+                } catch (Exception e) {
+                    ca.setValue("0");
+                    exam.setValue("100");
                 }
             }
         });
@@ -441,7 +462,7 @@ public class UserHomeView extends VerticalLayout implements View {
                 try {
 
                     int newValue;
-                    if (exam.getValue() == null || exam.getValue().trim().isEmpty() ) {
+                    if (exam.getValue() == null || exam.getValue().trim() == null || exam.getValue().trim().isEmpty() ) {
                         newValue = 0 ;
                     } else {
                         newValue = (Integer) exam.getConvertedValue();
@@ -455,8 +476,9 @@ public class UserHomeView extends VerticalLayout implements View {
                         exam.removeStyleName("emptyField");
                         ca.setValue(Integer.toString(caValue));
                     }
-                } catch (Converter.ConversionException e) {
-                    Notification.show("Invalid format: Please enter a number 0-100 ");
+                } catch (Exception e) {
+                    exam.setValue("0");
+                    ca.setValue("100");
                 }
             }
         });
@@ -467,16 +489,73 @@ public class UserHomeView extends VerticalLayout implements View {
         Button submit = new Button("Submit", new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
 
-                String trimmedModuleCode = moduleCode.getValue().trim();
-                String trimmedModuleTitle = moduleTitle.getValue().trim();
+                // check all fields are valid. If not, highlight red
+                boolean allFieldsValid = true;
 
-                if (trimmedModuleCode.isEmpty() || trimmedModuleTitle.isEmpty()) {
-                    Notification.show("Form incomplete - please fill all fields");
-
-                    // NOW NEED TO CHECK EXAM AND CA INPUT - must be int in correct range
-                } else {
-                    ///displayUploadWindow("");
+                if ( moduleCode.getValue().trim().isEmpty() ) {
+                    moduleCode.addStyleName("emptyField");
+                    allFieldsValid = false;
                 }
+
+                if ( moduleTitle.getValue().trim().isEmpty() ) {
+                    moduleTitle.addStyleName("emptyField");
+                    allFieldsValid = false;
+                }
+
+                try {
+
+                    int intExamValue = (Integer) exam.getConvertedValue();
+                    int intCaValue = (Integer) ca.getConvertedValue();
+
+                    if (intExamValue > 100 || intExamValue < 0 || intCaValue > 100 || intCaValue < 0) {
+                        allFieldsValid = false;
+                    }
+
+                } catch (Converter.ConversionException e) {
+                    allFieldsValid = false;
+                }
+
+                if (! allFieldsValid) {
+                    new Notification("All fields must be completed correctly - please fill highlighted fields",
+                            Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
+                } else {
+                    Notification.show("Form complete!");
+
+                    String trimmedModuleCode = moduleCode.getValue().trim();
+                    String trimmedModuleTitle = moduleTitle.getValue().trim();
+
+                    try {
+
+                        boolean moduleCodeExists = Database.checkModuleCode(trimmedModuleCode);
+
+                        if (moduleCodeExists) {
+                            moduleCode.addStyleName("emptyField");
+                            new Notification("The module code entered already exists - please enter a unique module code",
+                                    Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
+                        } else {
+
+                            boolean addedSuccessfully = Database.addNewModule(trimmedModuleCode, trimmedModuleTitle, creditCombo.getValue().toString(),
+                                    ca.getValue(), exam.getValue(), UserLogin.USER_ACC_NUM);
+
+                            if (addedSuccessfully) {
+                                Notification.show("New module successfully added");
+
+                                // refresh page to display new module
+                                UI.getCurrent().getNavigator().navigateTo(UserHomeView.USER_HOME);
+                            } else {
+                                new Notification("An error was encountered - failed to add new module",
+                                        Notification.Type.ERROR_MESSAGE).show(Page.getCurrent());
+                            }
+                        }
+
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                        new Notification("An error was encountered - failed to add new module",
+                                Notification.Type.ERROR_MESSAGE).show(Page.getCurrent());
+                    }
+
+                }
+
             }
         });
 
@@ -535,7 +614,6 @@ public class UserHomeView extends VerticalLayout implements View {
 
                     Notification.show("Selected file contents successfully added to the database");
                 } else {
-                    //Notification.show("Selected file is not in correct format - please select a valid file");
                     new Notification("Unable to read file contents - please select a valid file",
                             Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
                 }
@@ -543,7 +621,6 @@ public class UserHomeView extends VerticalLayout implements View {
             } else {
                 new Notification("Selected file is not in correct format - please select a valid file",
                         Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
-                //Notification.show("Selected file is not in correct format - please select a valid file");
             }
 
         }
