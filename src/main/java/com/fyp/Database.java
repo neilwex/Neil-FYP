@@ -39,23 +39,16 @@ public class Database {
         if (conn == null || !conn.isClosed()) {
 
             try {
-                //STEP 2: Register JDBC driver
+                // Register JDBC driver
                 Class.forName(JDBC_DRIVER);
 
-                //STEP 3: Open a connection
+                // Open a connection
                 System.out.println("Connecting to database...");
                 conn = DriverManager.getConnection(DB_URL, USER, PASS);
 
-                //STEP 4: Execute a query
-                System.out.println("Creating statement...");
-                //ps = conn.createStatement();
-
-                //handle exceptions
             } catch (SQLException se) {
-                //Handle errors for JDBC
                 se.printStackTrace();
             } catch (Exception e) {
-                //Handle errors for Class.forName
                 e.printStackTrace();
             }
 
@@ -76,8 +69,8 @@ public class Database {
             ps.close();
         }
 
-        System.out.println("Goodbye!");
-    } //end closeConnection()
+        System.out.println("Connection closed");
+    }
 
     public static void getAllResults() throws SQLException {
 
@@ -105,7 +98,6 @@ public class Database {
             System.out.println(", Pass/Fail?: " + (ca_mark + final_exam_mark >= PASS_MARK ? "Pass" : "Fail" ));
         }
 
-        closeConnection();
     }
 
     public static void getAverageGrade(String module) throws SQLException {
@@ -123,8 +115,6 @@ public class Database {
         //Retrieve by column name
         String average  = rs.getString("average");
         System.out.println("Overall Average: " + average);
-
-        //closeConnection();
     }
 
     public static void getMaxGrade (String module) throws SQLException {
@@ -141,8 +131,6 @@ public class Database {
         //Retrieve by column name
         String max  = rs.getString("max");
         System.out.println("Highest Grade Achieved: " + max);
-
-        //closeConnection();
     }
 
     public static void getMinGrade (String module) throws SQLException {
@@ -160,8 +148,6 @@ public class Database {
         //Retrieve by column name
         String min  = rs.getString("min");
         System.out.println("Lowest Grade Achieved: " + min);
-
-        closeConnection();
     }
 
     public static void getStdDev (String module) throws SQLException {
@@ -198,7 +184,6 @@ public class Database {
         rs.next();
 
         int credits = rs.getInt(1);
-        //int credits = rs.getInt(sum);
         if (credits == 60) {
             System.out.println("Student grades received for correct number of credits");
         } else if (credits < 60) {
@@ -510,11 +495,11 @@ public class Database {
         return rs;
     }
 
-    public static ResultSet getTabInfo (int accountID) throws SQLException {
+    public static ResultSet getModuleStats(int accountID) throws SQLException {
 
         setupConnection();
 
-        System.out.println("Calling method getTabInfo...");
+        System.out.println("Calling method getModuleStats...");
 
         sql = "SELECT code, name, credit_weighting, ca_mark_percentage, final_exam_percentage, approved, COUNT(results.student_num) AS num_results" +
                 " FROM modules INNER JOIN results ON results.module_code = modules.code WHERE accountID = ? GROUP BY module_code";
@@ -526,10 +511,26 @@ public class Database {
         return rs;
     }
 
-    public static ResultSet getModuleInfo (String module) throws SQLException {
+    public static ResultSet getModuleStats(String module) throws SQLException {
+
         setupConnection();
 
-        System.out.println("Calling method getModuleInfo...");
+        System.out.println("Calling method getModuleStats...");
+
+        sql = "SELECT credit_weighting, ca_mark_percentage, final_exam_percentage" +
+                " FROM modules WHERE code = ?";
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, module);
+        rs = ps.executeQuery();
+
+        System.out.println("Tab info retrieved");
+        return rs;
+    }
+
+    public static ResultSet getModuleResults(String module) throws SQLException {
+        setupConnection();
+
+        System.out.println("Calling method getModuleResults...");
 
         sql = "SELECT * FROM ( " +
                 "SELECT student_num, ca_mark, final_exam_mark, (ca_mark + final_exam_mark) AS total, rank FROM " +
@@ -554,7 +555,7 @@ public class Database {
 
         setupConnection();
 
-        System.out.println("Calling method getModuleInfo...");
+        System.out.println("Calling method getModuleResults...");
 
         sql = "SELECT AVG(ca_mark) AS ca, AVG(final_exam_mark) AS exam, AVG(ca_mark + final_exam_mark) AS total," +
                 "STDDEV(ca_mark + final_exam_mark) AS stddev, MIN(ca_mark+final_exam_mark) AS min, MAX(ca_mark+final_exam_mark) AS max " +
@@ -566,7 +567,6 @@ public class Database {
 
         System.out.println("Module averages retrieved");
         return rs;
-
     }
 
 
@@ -592,6 +592,27 @@ public class Database {
 
         //Retrieve by column name
         return rs.getInt(1);
+    }
+
+    public static boolean readCsvFile(String filename, String module){
+
+        try {
+            setupConnection();
+
+            //put filename in correct format
+            String editedFilename = filename.replace("\\", "\\\\");
+
+            sql = "LOAD DATA LOCAL INFILE '" + editedFilename + "' INTO TABLE results FIELDS TERMINATED BY ',' LINES TERMINATED BY '\\n' IGNORE 1 LINES (student_num, ca_mark, final_exam_mark) SET module_code = ?";
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, module);
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
     }
 
 } // end class

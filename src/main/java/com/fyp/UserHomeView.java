@@ -1,8 +1,6 @@
 package com.fyp;
 
-import com.vaadin.data.Container;
 import com.vaadin.data.Property;
-import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.data.util.converter.Converter;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
@@ -29,20 +27,11 @@ public class UserHomeView extends VerticalLayout implements View {
     private HorizontalLayout sessionInfo;
     private Label userDetails;
     private Button logoutButton;
-    private Table table;
 
-    private Button popUp;
-    private Button submitButton;
     private Window fileBrowserWindow;
     private VerticalLayout fileBrowserContent;
     private Button selectFile;
-    private String fileToArchive;
-    private String budgetNumber;
-    private Window addNewModuleWindow;
-
-    private Button downloadTemplate;
-    private Button uploadTemplate;
-    private Button getReport;
+    protected Window addNewModuleWindow;
 
     private TabSheet tabsheet;
     protected String currentTab;
@@ -64,8 +53,7 @@ public class UserHomeView extends VerticalLayout implements View {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-//        initButtons();
-        //initTextListener();
+
     }
 
     /**
@@ -82,16 +70,6 @@ public class UserHomeView extends VerticalLayout implements View {
         this.setComponentAlignment(root, Alignment.MIDDLE_CENTER);
         Page.getCurrent().setTitle("User Home");
 
-        HorizontalLayout allHeaderInfo = new HorizontalLayout();
-        allHeaderInfo.setSizeFull();
-        //root.addComponent(allHeaderInfo);
-        //allHeaderInfo.setMargin(new MarginInfo(true, true, false, false));
-
-        Label testLabel = new Label("THIS IS HEADING");
-        testLabel.setWidth(null);
-        ///allHeaderInfo.addComponent(testLabel);
-        //allHeaderInfo.setComponentAlignment(testLabel, Alignment.TOP_LEFT);
-
         // session information
         sessionInfo = new HorizontalLayout();
         sessionInfo.setSpacing(true);
@@ -101,7 +79,6 @@ public class UserHomeView extends VerticalLayout implements View {
         sessionInfo.setWidth(null);
         sessionInfo.setMargin(new MarginInfo(true, true, false, false));
         root.addComponent(sessionInfo);
-        //allHeaderInfo.addComponent(sessionInfo);
         root.setComponentAlignment(sessionInfo, Alignment.TOP_RIGHT);
 
         // display session information and logout button
@@ -127,7 +104,6 @@ public class UserHomeView extends VerticalLayout implements View {
 
         instructions.addStyleName("instructions");
         instructions.setHeight("100px");
-        //instructions.setWidth("100%");
         root.addComponent(instructions);
 
         Button addModule = new Button("Add Module", new Button.ClickListener() {
@@ -147,23 +123,10 @@ public class UserHomeView extends VerticalLayout implements View {
         hLayout.setSpacing(true);
         root.addComponent(hLayout);
 
-        /*Database.setupConnection();
-
-        String sql = "SELECT code FROM modules WHERE accountID = 2";
-        ResultSet list = Database.getList(sql);
-        IndexedContainer container = new IndexedContainer();
-        container.addContainerProperty("Modules", String.class, null);
-
-        while (list.next()) {
-            String item = list.getString(1);
-            container.addItem(item);
-            container.getContainerProperty(item, "Modules").setValue(item);
-        }*/
-
         tabsheet = new TabSheet();
-        //tabsheet.setHeight("300px");
         hLayout.addComponent(tabsheet);
-        final ResultSet moduleInfo = Database.getTabInfo(UserLogin.USER_ACC_NUM);
+        final ResultSet moduleInfo = Database.getModuleStats(UserLogin.USER_ACC_NUM);
+
         while (moduleInfo.next()) {
             final String code = moduleInfo.getString("code");
 
@@ -197,22 +160,18 @@ public class UserHomeView extends VerticalLayout implements View {
                 grid.addComponent(new Label(moduleInfo.getString("num_results")));
 
                 grid.addComponent(new Button("Download Template"),0,5);
-
                 templateResource = createResource(code, credits, ca, exam);
                 templateDownloader = new FileDownloader(templateResource);
                 templateDownloader.extend((AbstractComponent) grid.getComponent(0, 5));
 
-                //grid.addComponent(new Button("Upload Results"),0,6);
                 grid.addComponent(new Button("Upload Results", new Button.ClickListener() {
                     @Override
                     public void buttonClick(Button.ClickEvent clickEvent) {
-                        System.out.println("yoyo");
                         displayUploadWindow(code);
                     }
                 }),0,6);
 
                 grid.addComponent(new Button("Get Report"),0,7);
-
                 reportResource = createResource(code);
                 reportDownloader = new FileDownloader(reportResource);
                 reportDownloader.extend((AbstractComponent) grid.getComponent(0, 7));
@@ -235,33 +194,6 @@ public class UserHomeView extends VerticalLayout implements View {
             }
         });
 
-
-        table = new Table("");
-
-        /*
-
-        //table.setContainerDataSource(container);
-        table.setSelectable(true);
-        table.setImmediate(true);
-        table.setWidth("-1px");
-        table.setPageLength(0);
-*/
-        //hLayout.addComponent(table);
-
-        //userContent.setComponentAlignment(table, Alignment.TOP_LEFT);
-        //hLayout.setComponentAlignment(table, Alignment.MIDDLE_LEFT);
-
-        /*Panel panel = new Panel("Panel");
-        panel.addStyleName("panel");
-        panel.setImmediate(true);
-        panel.setWidth("400px");
-        panel.setHeight("300px");
-        //hLayout.addComponent(panel);
-
-        VerticalLayout v = new VerticalLayout();
-
-        panel.setContent(new Label("Test"));*/
-
         currentTab = tabsheet.getTab(0).getCaption();
     }
 
@@ -272,19 +204,17 @@ public class UserHomeView extends VerticalLayout implements View {
             public InputStream getStream() {
 
                 File file = null;
-                ResultSet resultsData = null;
-                ResultSet moduleAverages = null;
                 try {
 
                     //get module data from database
                     int num_students = Database.getNumStudents(code);
                     int modulesCredits = Database.getCredits(code);
-                    resultsData = Database.getModuleInfo(code);
-                    moduleAverages = Database.getModuleAverages(code);
-                    jOpenDocumentCreateTest c = null;
+                    ResultSet resultsData = Database.getModuleResults(code);
+                    ResultSet moduleAverages = Database.getModuleAverages(code);
 
                     try {
-                        c = new jOpenDocumentCreateTest();
+                        jOpenDocumentCreateTest c = new jOpenDocumentCreateTest();
+
                         // create spreadsheet report for module
                         file = c.createReport(num_students, modulesCredits, resultsData, moduleAverages);
                     } catch (IOException e) {
@@ -300,16 +230,16 @@ public class UserHomeView extends VerticalLayout implements View {
     }
 
     private StreamResource createResource(final String code, final int credits, final int ca, final int exam ) {
-        String filename = code + "Template.ods";
+        String filename = code + "Template.csv";
         return new StreamResource(new StreamResource.StreamSource() {
             @Override
             public InputStream getStream() {
 
-                jOpenDocumentCreateTest c = null;
                 File file = null;
+
                 try {
-                    c = new jOpenDocumentCreateTest();
-                    file = c.createFile(code, credits, ca, exam);
+                    file = CsvFile.createCsvFile(credits, ca, exam);
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -323,8 +253,6 @@ public class UserHomeView extends VerticalLayout implements View {
         byte[] b;
 
         try {
-            //create spreadsheet document
-
             b = new byte[(int) file.length()];
 
             FileInputStream fileInputStream = new FileInputStream(file);
@@ -343,57 +271,12 @@ public class UserHomeView extends VerticalLayout implements View {
         return new ByteArrayInputStream(b);
     }
 
-    /**
-     * Set up the File browser pop-up and relevant listeners
-     */
-    private void initFileBrowserPopUpButton() {
-
-        // end the session and redirect the user to login page
-        popUp.addClickListener(new Button.ClickListener() {
-            public void buttonClick(Button.ClickEvent event) {
-
-                initFileBrowserPopUp();
-
-                // resize tree according to current window size
-                fileBrowserWindow.addResizeListener(new Window.ResizeListener() {
-                    @Override
-                    public void windowResized(Window.ResizeEvent e) {
-
-
-                    }
-                });
-
-                // close pop-up and get the name of selected file/folder
-                selectFile.addClickListener(new Button.ClickListener() {
-                    @Override
-                    public void buttonClick(Button.ClickEvent event) {
-
-                        // close pop up window
-                        fileBrowserWindow.close();
-
-                        fileToArchive = "No File Selected";
-                        // if file/folder selected, get its name
-                        /*if (!checked.isEmpty()) {
-                            String selected = checked.get(0);
-
-                            // only display relative file path for user
-                            fileToArchive = selected.replace("", "");
-                        }*/
-
-                        // update the button with the selected file/folder name
-                        popUp.setCaption(fileToArchive);
-                    }
-                });
-            }
-        });
-    }
 
     /**
      * Initialise the buttons for the main page
      */
     private void initButtons() {
 
-        //initFileBrowserPopUpButton();
         //initSubmitButton();
     }
 
@@ -428,25 +311,6 @@ public class UserHomeView extends VerticalLayout implements View {
      */
     private void initSubmitButton() {
 
-        submitButton.addClickListener(new Button.ClickListener() {
-            public void buttonClick(Button.ClickEvent event) {
-
-                //deleteAfterArchiving = deleteAfterCheckbox.getValue();
-                //budgetNumber = budgetNumTextField.getValue().trim();
-
-                if (true) {//checked.isEmpty()) {
-                    Notification.show("No file selected - Please select a file to archive");
-
-                } else if (budgetNumber.isEmpty()) {
-                    //budgetNumTextField.addStyleName("emptyField");
-                    Notification.show("Please provide a valid budget number");
-
-                } else  {
-                    //budgetNumTextField.removeStyleName("emptyField");
-                    displayUploadWindow("");
-                }
-            }
-        });
     }
 
     /**
@@ -470,8 +334,9 @@ public class UserHomeView extends VerticalLayout implements View {
         summaryWindow.setImmediate(true);
 
         // add uploader
-        SpreadsheetUploader receiver = new SpreadsheetUploader();
+        CsvUploader receiver = new CsvUploader();
         Upload upload = new Upload("This is caption", receiver);
+        upload.addSucceededListener(receiver);
         summaryContent.addComponent(upload);
 
         // cancel button
@@ -513,16 +378,8 @@ public class UserHomeView extends VerticalLayout implements View {
 
         final TextField moduleCode = new TextField("Module Code");
         form.addComponent(moduleCode);
-
         final TextField moduleTitle = new TextField("Module Title");
         form.addComponent(moduleTitle);
-
-        // container for credits combobox
-        final Container container = new IndexedContainer();
-        container.addItem(new Integer(5));
-        container.addItem(new Integer(10));
-        container.addItem(new Integer(15));
-        container.addItem(new Integer(20));
 
         ComboBox creditCombo = new ComboBox("Credit Weighting");
         form.addComponent(creditCombo);
@@ -549,6 +406,7 @@ public class UserHomeView extends VerticalLayout implements View {
         exam.setValue("80");
         form.addComponent(exam);
 
+        //listener for updating exam figure when ca is changed
         ca.addValueChangeListener(new Property.ValueChangeListener() {
             @Override
             public void valueChange(Property.ValueChangeEvent event) {
@@ -575,6 +433,7 @@ public class UserHomeView extends VerticalLayout implements View {
             }
         });
 
+        //listener for updating ca figure when exam is changed
         exam.addValueChangeListener(new Property.ValueChangeListener() {
             @Override
             public void valueChange(Property.ValueChangeEvent event) {
@@ -604,13 +463,12 @@ public class UserHomeView extends VerticalLayout implements View {
 
         HorizontalLayout buttons = new HorizontalLayout();
         buttons.setSpacing(true);
-        form.addComponent(buttons);
+
         Button submit = new Button("Submit", new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
 
                 String trimmedModuleCode = moduleCode.getValue().trim();
                 String trimmedModuleTitle = moduleTitle.getValue().trim();
-                //budgetNumber = budgetNumTextField.getValue().trim();
 
                 if (trimmedModuleCode.isEmpty() || trimmedModuleTitle.isEmpty()) {
                     Notification.show("Form incomplete - please fill all fields");
@@ -628,9 +486,10 @@ public class UserHomeView extends VerticalLayout implements View {
                 addNewModuleWindow.close();
             }
         });
+
         buttons.addComponent(submit);
         buttons.addComponent(cancel);
-
+        form.addComponent(buttons);
 
         // display whether file will be kept/deleted after archiving
         String notification = "Your request has been sent to the IT Department who will notify you when archiving has been completed.<br>" +
@@ -641,45 +500,53 @@ public class UserHomeView extends VerticalLayout implements View {
         getUI().addWindow(addNewModuleWindow);
     }
 
-    private class SpreadsheetUploader implements Upload.Receiver {
+    protected class CsvUploader implements Upload.Receiver, Upload.SucceededListener {
 
-        /**
-         * return an OutputStream that simply counts lineends
-         */
-        @Override
-        public OutputStream receiveUpload(final String filename,
-                                          final String MIMEType) {
-            File file = null;
+        public File file;
 
+        public OutputStream receiveUpload(String filename,
+                                          String mimeType) {
             // Create upload stream
             FileOutputStream fos = null; // Stream to write to
             try {
-                // Open the file for writing.
-                file = new File("uploads\\" + filename);
-                fos = new FileOutputStream(file);
-                fos.flush();
 
+                // Open the file for writing.
+                file = new File("files\\" + filename);
+                fos = new FileOutputStream(file);
             } catch (final java.io.FileNotFoundException e) {
                 new Notification("Could not open file<br/>",
-                        e.getMessage(),
-                        Notification.Type.ERROR_MESSAGE)
-                        .show(Page.getCurrent());
+                        e.getMessage(), Notification.Type.ERROR_MESSAGE).show(Page.getCurrent());
                 return null;
-            } catch (IOException e) {
-                e.printStackTrace();
             }
-
-            try {
-                jOpenDocumentCreateTest upload = new jOpenDocumentCreateTest();
-                upload.readFile(file, 1, 1);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
 
             return fos; // Return the output stream to write to
         }
 
-    }
+        public void uploadSucceeded(Upload.SucceededEvent event) {
+
+            //check file format of uploaded document
+            boolean isFileCorrectFormat = CsvFile.isValidCsvFile(file, currentTab);
+            System.out.println("isFileCorrectFormat? " + isFileCorrectFormat);
+
+            if (isFileCorrectFormat) {
+                boolean readCsvFileSuccessfully = Database.readCsvFile(file.getAbsolutePath(), currentTab);
+
+                if (readCsvFileSuccessfully) {
+
+                    Notification.show("Selected file contents successfully added to the database");
+                } else {
+                    //Notification.show("Selected file is not in correct format - please select a valid file");
+                    new Notification("Unable to read file contents - please select a valid file",
+                            Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
+                }
+
+            } else {
+                new Notification("Selected file is not in correct format - please select a valid file",
+                        Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
+                //Notification.show("Selected file is not in correct format - please select a valid file");
+            }
+
+        }
+    };
 
 }
