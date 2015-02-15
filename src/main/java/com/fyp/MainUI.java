@@ -48,10 +48,6 @@ public class MainUI extends UI{
                 // check if desired page is the login page
                 boolean isLoginView = event.getNewView() instanceof UserLogin;
 
-                // check what page user was previously on
-                boolean isOldViewRetrieveView = event.getOldView() instanceof RetrievingBrowser;
-                boolean isOldViewArchiveView = event.getOldView() instanceof UserHomeView;
-
                 if (!isLoggedIn && !isLoginView) {
 
                     // redirect to login view if not already logged in

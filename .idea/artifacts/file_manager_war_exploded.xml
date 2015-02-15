@@ -34,6 +34,11 @@
         <element id="file-copy" path="$PROJECT_DIR$/target/MANIFEST.MF" />
       </element>
       <element id="javaee-facet-resources" facet="file-manager/web/Web" />
+      <element id="directory" name="VAADIN">
+        <element id="directory" name="widgetsets">
+          <element id="gwt-compiler-output" facet="file-manager/gwt/GWT" />
+        </element>
+      </element>
     </root>
   </artifact>
 </component>

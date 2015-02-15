@@ -4,12 +4,8 @@ import com.vaadin.data.Property;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
 import com.vaadin.server.Page;
-import com.vaadin.server.Resource;
-import com.vaadin.server.ThemeResource;
-import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.*;
 
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -19,7 +15,6 @@ import java.sql.SQLException;
 @SuppressWarnings("serial")
 public class UserLogin extends VerticalLayout implements View {
 
-    //private Panel explorerPanel;
     private VerticalLayout root;
     private FormLayout loginForm;
     private Label header;
@@ -28,8 +23,6 @@ public class UserLogin extends VerticalLayout implements View {
     private Button loginButton;
     private String enteredUsername;
     private String enteredPassword;
-    private String primary_group;
-    private String user_email;
 
     protected static final String LOGIN = "";
     protected static final String ADMIN = "admin";
@@ -37,7 +30,6 @@ public class UserLogin extends VerticalLayout implements View {
     protected static String USER_NAME;
     protected static int USER_ACC_NUM;
     protected static String USER_FORENAME;
-
 
     @Override
     public void enter(ViewChangeListener.ViewChangeEvent event) {
@@ -70,13 +62,9 @@ public class UserLogin extends VerticalLayout implements View {
         loginForm.addComponent(header);
 
         loginNameField = new TextField("Username");
-        //loginNameField.setRequired(true);
-        //loginNameField.setRequiredError("Please enter your login name.");
         loginForm.addComponent(loginNameField);
 
         password = new PasswordField("Password");
-        //password.setRequired(true);
-        //password.setRequiredError("Please enter your login password.");
         password.setNullSettingAllowed(false);
         loginForm.addComponent(password);
 
@@ -88,7 +76,7 @@ public class UserLogin extends VerticalLayout implements View {
     }
 
     /**
-     * Click listener for login button, which authenticates user then displays application choice
+     * Click listener for login button, which authenticates user then navigates to appropriate view
      */
     private void initLogin() {
 
@@ -101,22 +89,7 @@ public class UserLogin extends VerticalLayout implements View {
 
                 if ( isValidInputProvided()) {
 
-                    System.out.println("\nUsername provided: " + enteredUsername);
-
-                /*    boolean userCreated = false;
-
-                        try {
-                            userCreated = Database.createUser("cat","Cat","Power","cat");
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        } catch (NoSuchAlgorithmException e) {
-                            e.printStackTrace();
-                        } catch (UnsupportedEncodingException e) {
-                            e.printStackTrace();
-                        }
-
-
-                    System.out.println("User Created Successfully?: " + userCreated);*/
+                    System.out.println("Username provided: " + enteredUsername);
 
                     try {
                         if (Database.attemptLogin(enteredUsername, enteredPassword) ) {
@@ -128,7 +101,6 @@ public class UserLogin extends VerticalLayout implements View {
                             } else {
                                 System.out.println("Navigating to user (non-admin) home...");
                                 navigateToView(UserHomeView.USER_HOME);
-                                //navigateToView(TestView.TEST_VIEW);
                             }
 
                         } else {
@@ -136,11 +108,6 @@ public class UserLogin extends VerticalLayout implements View {
                             Notification.show("Login Failed");
                         }
 
-                        //displayOptionWindow(loginMessage);
-
-                        //if Admin, navigate to Admin page
-
-                        //else (if any other user, navigate to their home page)
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
@@ -149,81 +116,6 @@ public class UserLogin extends VerticalLayout implements View {
             }
         });
     }
-
-    /**
-     * Displays pop-up window for selecting which application to access
-     * Redirects user to correct view based on which button is selected
-     */
-    private void displayOptionWindow(String message) {
-
-        // create window to allow user to select which task they require
-        final Window optionWindow = new Window("Login");
-        optionWindow.setModal(true);
-        //optionWindow.setClosable(false);
-        optionWindow.setResizable(false);
-        optionWindow.setImmediate(true);
-        optionWindow.center();
-
-        // set the layout
-        final VerticalLayout optionContent = new VerticalLayout();
-        optionContent.setMargin(true);
-        optionContent.setSpacing(true);
-        optionContent.setSizeUndefined();
-
-        // label containing notification info for user
-        String notification = "Please select which application you require";
-        Label label = new Label (message);
-        optionContent.addComponent(label);
-        optionContent.setComponentAlignment(label, Alignment.TOP_CENTER);
-
-        HorizontalLayout buttons = new HorizontalLayout();
-        buttons.setSpacing(true);
-        optionContent.addComponent(buttons);
-
-        Button archiveButton = new Button("Request Archive");
-        Button retrieveButton = new Button("Request Retrieval");
-
-        /*
-        archiveButton.addStyleName("buttons");
-        retrieveButton.addStyleName("buttons");
-        buttons.addComponent(archiveButton);
-        buttons.addComponent(retrieveButton);
-        */
-        optionWindow.setContent(optionContent);
-        getUI().addWindow(optionWindow);
-
-        archiveButton.addClickListener(new Button.ClickListener() {
-            @Override
-            public void buttonClick(Button.ClickEvent event) {
-                optionWindow.close();
-                System.out.println("Accessing Archive Application...");
-
-                //attempt mount (if required)
-                if ( true ) { //mountUserAccountIfRequired
-                    try {
-                        navigateToView(UserHomeView.USER_HOME);
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
-
-        retrieveButton.addClickListener(new Button.ClickListener() {
-            @Override
-            public void buttonClick(Button.ClickEvent event) {
-                optionWindow.close();
-                System.out.println("Accessing Retrieve Application...");
-
-                try {
-                    navigateToView(RetrievingBrowser.RETRIEVAL_BROWSER);
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-
 
     /**
      * Creates the session information and then navigates to requested view
@@ -244,10 +136,6 @@ public class UserLogin extends VerticalLayout implements View {
             getSession().setAttribute("user", USER_NAME);
             getSession().setAttribute("accountID", USER_ACC_NUM);
             getSession().setAttribute("accountID", USER_FORENAME);
-
-
-            System.out.println(getSession().getAttribute("user").toString());
-            System.out.println(getSession().getAttribute("accountID").toString());
 
             // navigate to desired view
             UI.getCurrent().getNavigator().navigateTo(view);
@@ -305,13 +193,11 @@ public class UserLogin extends VerticalLayout implements View {
         if ( enteredUsername.equals("") ) {
             System.out.println("Username not provided");
             loginNameField.addStyleName("emptyField");
-            //loginNameField.getRequiredError();
             Notification.show("A username must be provided");
             return false;
         } else if (enteredPassword.equals("") ) {
             System.out.println("Password not provided");
             password.addStyleName("emptyField");
-            //password.getRequiredError();
             Notification.show("A password must be provided");
             return false;
         }
@@ -322,98 +208,4 @@ public class UserLogin extends VerticalLayout implements View {
     }
 
 
-    /**
-     * class for window to be displayed whilst mounting
-     */
-    private class CallBack {
-
-        private Window notificationWindow;
-
-        public CallBack() {
-
-            // create window for displaying 'wait' notification
-            notificationWindow = new Window("Accessing your account");
-            notificationWindow.setModal(true);
-            notificationWindow.setClosable(false);
-            notificationWindow.setResizable(false);
-            notificationWindow.setImmediate(true);
-            notificationWindow.center();
-
-            // set the layout
-            VerticalLayout notificationContent = new VerticalLayout();
-            notificationContent.setMargin(true);
-            notificationContent.setSpacing(true);
-            notificationContent.setSizeUndefined();
-
-            // label containing notification info for user
-            String notification = "The file system is mounting.<br>" +
-                                  "This may take some time. Please be patient...";
-            Label message1 = new Label (notification, ContentMode.HTML);
-            notificationContent.addComponent(message1);
-            notificationContent.setComponentAlignment(message1, Alignment.MIDDLE_CENTER);
-
-            // gif loading image
-            Resource res = new ThemeResource("img/waiting1.gif");
-            Image image = new Image(null, res);
-            notificationContent.addComponent(image);
-            notificationContent.setComponentAlignment(image, Alignment.BOTTOM_CENTER);
-
-            notificationWindow.setContent(notificationContent);
-        }
-
-        public void start() {
-            // Open pop-up in the UI
-            getUI().addWindow(notificationWindow);
-            getUI().setPollInterval(500);
-        }
-
-        public void done(UI ui) {
-            //System.out.println("Closing 'loading' pop-up window...");
-            ui.setPollInterval(-1);
-            notificationWindow.close();
-        }
-
-    }
-
-    /**
-     * class for executing the mount (with a separate thread)
-     */
-    private class MyThread extends Thread {
-
-        private CallBack callback;
-        private String execCommand;
-        private UI ui;
-
-        public MyThread(CallBack callback, String execCommand, UI ui) {
-            this.callback = callback;
-            this.execCommand = execCommand;
-            this.ui = ui;
-        }
-
-        @Override
-        public void run() {
-            boolean mountComplete;
-
-            System.out.println("Mounting...");
-            try {
-                // mount and wait until complete
-                Runtime.getRuntime().exec(execCommand).waitFor();
-                mountComplete = true;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                mountComplete = false;
-            } catch (IOException e) {
-                e.printStackTrace();
-                mountComplete = false;
-            }
-
-            if (mountComplete) {
-                System.out.println("Mounting complete");
-                callback.done(ui);
-            }
-        }
-
-    }
-
-
-}
+} //end of class

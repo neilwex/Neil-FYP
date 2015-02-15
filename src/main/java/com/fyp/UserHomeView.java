@@ -10,14 +10,15 @@ import com.vaadin.server.Page;
 import com.vaadin.server.StreamResource;
 import com.vaadin.server.VaadinSession;
 import com.vaadin.shared.ui.MarginInfo;
-import com.vaadin.shared.ui.MultiSelectMode;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.*;
-import org.tepi.filtertable.FilterTable;
 
 import java.io.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
+
+//import org.tepi.filtertable.FilterTable;
 
 /**
  * Created by Neil on 25/01/2015.
@@ -34,7 +35,7 @@ public class UserHomeView extends VerticalLayout implements View {
     private Window fileBrowserWindow;
     private VerticalLayout fileBrowserContent;
     private Button selectFile;
-    protected Window addNewModuleWindow;
+    private Window addNewModuleWindow;
 
     private TabSheet tabsheet;
     protected String currentTab;
@@ -47,9 +48,18 @@ public class UserHomeView extends VerticalLayout implements View {
     private FileDownloader reportDownloader;
 
     private com.vaadin.data.Container container;
-    private FilterTable table;
+    private Table table;
     private Window resultsWindow;
     private VerticalLayout resultsContent;
+
+    private final String STUDENT_NUM = "Student Number";
+    private final String CA = "CA";
+    private final String EXAM = "Exam";
+    private final String RESULT = "Result";
+    private final String PERCENT = "Percentage";
+    private final String AWARD = "Award";
+    private final String GPA = "GPA Grade";
+    private final String RANK = "Rank";
 
     @Override
     public void enter(ViewChangeListener.ViewChangeEvent event) {
@@ -78,15 +88,24 @@ public class UserHomeView extends VerticalLayout implements View {
         Page.getCurrent().setTitle("User Home");
 
         // session information
-        sessionInfo = new HorizontalLayout();
+
+        //create session info object
+        //add it to root
+        //set component alignment
+        //root.addComponent(sessionInfo);
+        //root.setComponentAlignment(sessionInfo, Alignment.TOP_RIGHT);
+
+        SessionInfo sessionInfo1 = new SessionInfo(session, getUI());
+        root.addComponent(sessionInfo1);
+        root.setComponentAlignment(sessionInfo1, Alignment.TOP_RIGHT);
+
+        /*sessionInfo = new HorizontalLayout();
         sessionInfo.setSpacing(true);
         sessionInfo.setHeight("120px");
         root.addComponent(sessionInfo);
         root.setComponentAlignment(sessionInfo, Alignment.TOP_RIGHT);
         sessionInfo.setWidth(null);
         sessionInfo.setMargin(new MarginInfo(true, true, false, false));
-        //root.addComponent(sessionInfo);
-        //root.setComponentAlignment(sessionInfo, Alignment.TOP_RIGHT);
 
         // display session information and logout button
         userDetails = new Label("Logged in: " + UserLogin.USER_NAME);
@@ -98,7 +117,7 @@ public class UserHomeView extends VerticalLayout implements View {
         logoutButton.addStyleName("buttons");
         //logoutButton.setSizeUndefined();
         sessionInfo.addComponent(logoutButton);
-        logoutButton.addClickListener(new LogoutListener(session, getUI()));
+        logoutButton.addClickListener(new LogoutListener(session, getUI()));*/
 
         Label newHeading = new Label("Welcome back, " + UserLogin.USER_FORENAME );
         newHeading.addStyleName("heading");
@@ -171,24 +190,27 @@ public class UserHomeView extends VerticalLayout implements View {
                 templateDownloader = new FileDownloader(templateResource);
                 templateDownloader.extend((AbstractComponent) grid.getComponent(0, 5));
 
+                grid.addComponent(new Button("View Results", new Button.ClickListener() {
+                    @Override
+                    public void buttonClick(Button.ClickEvent clickEvent) {
+                        displayResultsWindow();
+                    }
+                }),1,5);
+
                 grid.addComponent(new Button("Upload Results", new Button.ClickListener() {
                     @Override
                     public void buttonClick(Button.ClickEvent clickEvent) {
                         displayUploadWindow(code);
                     }
                 }),0,6);
+                grid.getComponent(0,6).setWidth("100%");
 
-                grid.addComponent(new Button("Get Report"),0,7);
+                grid.addComponent(new Button("Get Report"),1,6);
                 reportResource = createResource(code);
                 reportDownloader = new FileDownloader(reportResource);
-                reportDownloader.extend((AbstractComponent) grid.getComponent(0, 7));
+                reportDownloader.extend((AbstractComponent) grid.getComponent(1, 6));
+                //grid.getComponent(1,6).setWidth("131px");
 
-                grid.addComponent(new Button("View Results", new Button.ClickListener() {
-                    @Override
-                    public void buttonClick(Button.ClickEvent clickEvent) {
-                        displayResultsWindow();
-                    }
-                }),0,8);
             }
 
             grid.setCaption(code);
@@ -218,7 +240,7 @@ public class UserHomeView extends VerticalLayout implements View {
         resultsContent = new VerticalLayout();
         resultsContent.setMargin(true);
         resultsContent.setSpacing(true);
-        resultsWindow.setWidth("-1px");
+        resultsWindow.setWidth("750px");
         resultsWindow.setHeight("-1px");
 
         resultsWindow.setModal(true);
@@ -231,10 +253,14 @@ public class UserHomeView extends VerticalLayout implements View {
         container = new IndexedContainer();
 
         // Define the names and data types of columns
-        container.addContainerProperty("Student Number", String.class, null);
-        container.addContainerProperty("CA", Integer.class, null);
-        container.addContainerProperty("Exam", Integer.class, null);
-        container.addContainerProperty("Result", Integer.class, null);
+        container.addContainerProperty(STUDENT_NUM, String.class, null);
+        container.addContainerProperty(CA, Integer.class, null);
+        container.addContainerProperty(EXAM, Integer.class, null);
+        container.addContainerProperty(RESULT, Integer.class, null);
+        container.addContainerProperty(PERCENT, Double.class, null);
+        container.addContainerProperty(AWARD, String.class, null);
+        container.addContainerProperty(GPA, String.class, null);
+        container.addContainerProperty(RANK, Integer.class, null);
 
         try {
             createAndFillTable();
@@ -251,15 +277,20 @@ public class UserHomeView extends VerticalLayout implements View {
      */
     private void createAndFillTable() throws SQLException {
 
-        table = new FilterTable();
+        table = new Table();
         table.setContainerDataSource(container);
-        table.setWidth("100%");
+        table.setWidth("655px");
         table.setSelectable(true);
-        table.setMultiSelect(true);
         table.setImmediate(true);
-        table.setMultiSelectMode(MultiSelectMode.SIMPLE);
-        table.setFilterBarVisible(true);
-        //table.setColumnWidth(DATE, 240);
+
+        table.setColumnWidth(STUDENT_NUM, 130);
+        table.setColumnWidth(CA, 55);
+        table.setColumnWidth(EXAM, 65);
+        table.setColumnWidth(RESULT, 70);
+        table.setColumnWidth(PERCENT, 100);
+        table.setColumnWidth(AWARD, 70);
+        table.setColumnWidth(GPA, 95);
+        table.setColumnWidth(RANK, 60);
 
         fillTable();
 
@@ -273,21 +304,28 @@ public class UserHomeView extends VerticalLayout implements View {
     private void fillTable() throws SQLException {
 
         ResultSet results = Database.getModuleResults(currentTab);
+        int credits = Database.getCredits(currentTab);
+
+        DecimalFormat df = new DecimalFormat("#.##");
+
+            // Round percentage to 2 decimal points
 
         while (results.next()) {
 
             String studentNum = results.getString("student_num");
+            double percentage = Double.parseDouble(df.format(results.getInt("total") * 5.0 / credits));
 
             // add details as a row to table
             container.addItem(studentNum);
-            container.getContainerProperty(studentNum, "Student Number").setValue(studentNum);
-            container.getContainerProperty(studentNum, "CA").setValue(results.getInt("ca_mark"));
-            container.getContainerProperty(studentNum, "Exam").setValue(results.getInt("final_exam_mark"));
-            container.getContainerProperty(studentNum, "Result").setValue(results.getInt("total"));
-            //container.getContainerProperty(studentNum, "Percent", Doubl).setValue(fileName);
-
+            container.getContainerProperty(studentNum, STUDENT_NUM).setValue(studentNum);
+            container.getContainerProperty(studentNum, CA).setValue(results.getInt("ca_mark"));
+            container.getContainerProperty(studentNum, EXAM).setValue(results.getInt("final_exam_mark"));
+            container.getContainerProperty(studentNum, RESULT).setValue(results.getInt("total"));
+            container.getContainerProperty(studentNum, PERCENT).setValue(percentage);
+            container.getContainerProperty(studentNum, AWARD).setValue(GradeCalculator.getAward(percentage));
+            container.getContainerProperty(studentNum, GPA).setValue(GradeCalculator.getGPGrade(percentage));
+            container.getContainerProperty(studentNum, RANK).setValue(results.getInt("rank"));
         }
-
 
     }
 
