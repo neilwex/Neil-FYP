@@ -88,36 +88,9 @@ public class UserHomeView extends VerticalLayout implements View {
         Page.getCurrent().setTitle("User Home");
 
         // session information
-
-        //create session info object
-        //add it to root
-        //set component alignment
-        //root.addComponent(sessionInfo);
-        //root.setComponentAlignment(sessionInfo, Alignment.TOP_RIGHT);
-
         SessionInfo sessionInfo1 = new SessionInfo(session, getUI());
         root.addComponent(sessionInfo1);
         root.setComponentAlignment(sessionInfo1, Alignment.TOP_RIGHT);
-
-        /*sessionInfo = new HorizontalLayout();
-        sessionInfo.setSpacing(true);
-        sessionInfo.setHeight("120px");
-        root.addComponent(sessionInfo);
-        root.setComponentAlignment(sessionInfo, Alignment.TOP_RIGHT);
-        sessionInfo.setWidth(null);
-        sessionInfo.setMargin(new MarginInfo(true, true, false, false));
-
-        // display session information and logout button
-        userDetails = new Label("Logged in: " + UserLogin.USER_NAME);
-        sessionInfo.addComponent(userDetails);
-
-        // logout button
-        logoutButton = new Button("Logout");
-        //logoutButton.addStyleName(BaseTheme.BUTTON_LINK);
-        logoutButton.addStyleName("buttons");
-        //logoutButton.setSizeUndefined();
-        sessionInfo.addComponent(logoutButton);
-        logoutButton.addClickListener(new LogoutListener(session, getUI()));*/
 
         Label newHeading = new Label("Welcome back, " + UserLogin.USER_FORENAME );
         newHeading.addStyleName("heading");
@@ -126,10 +99,10 @@ public class UserHomeView extends VerticalLayout implements View {
 
         Label instructions = new Label("Please click on the tabs below to explore your modules.<br>" +
                 "Alternatively, you can add new module information by clicking below.<br>" +
-                "Please note: All newly added modules must be first approved by the administrators before they can be used" , ContentMode.HTML);
+                "Please note: All newly added modules must be first approved by the administrators before they can be used." , ContentMode.HTML);
 
         instructions.addStyleName("instructions");
-        instructions.setHeight("100px");
+        instructions.setHeight("90px");
         root.addComponent(instructions);
 
         Button addModule = new Button("Add Module", new Button.ClickListener() {
@@ -138,6 +111,7 @@ public class UserHomeView extends VerticalLayout implements View {
                 displayAddModuleWindow();
             }
         });
+        addModule.addStyleName("buttons");
         root.addComponent(addModule);
 
         HorizontalLayout hLayout = new HorizontalLayout();
@@ -153,70 +127,84 @@ public class UserHomeView extends VerticalLayout implements View {
         hLayout.addComponent(tabsheet);
         final ResultSet moduleInfo = Database.getModuleStats(UserLogin.USER_ACC_NUM);
 
-        while (moduleInfo.next()) {
-            final String code = moduleInfo.getString("code");
+        //if no modules yet, set up empty tab
+        if (!moduleInfo.isBeforeFirst() ) {
 
-            // setup grid layout for each tab
-            GridLayout grid = new GridLayout(2, 9);
-            grid.setMargin(new MarginInfo(true,false,false,false));
-            grid.addStyleName("grid");
-            grid.setSpacing(true);
-            grid.setWidth(null);
+            VerticalLayout v = new VerticalLayout();
+            v.setMargin(new MarginInfo(true, false, false, false));
+            //v.setSpacing(true);
+            Label noModules = new Label("You have no registered modules yet.<br>" +
+                    "Please click on the 'Add Module' button above to add a new module.<br>", ContentMode.HTML);
 
-            if ( !moduleInfo.getBoolean("approved") ) {
-                //module not approved yet, so display warning message
-                grid.addComponent(new Label("This module has not yet been approved by the administrator", ContentMode.TEXT));
+            noModules.setCaption("Modules");
+            v.addComponent(noModules);
+            tabsheet.addTab(v);
+            System.out.println("No modules");
+        } else {
+            while (moduleInfo.next()) {
+                final String code = moduleInfo.getString("code");
 
-            } else {
+                // setup grid layout for each tab
+                GridLayout grid = new GridLayout(2, 9);
+                grid.setMargin(new MarginInfo(true, false, false, false));
+                grid.addStyleName("grid");
+                grid.setSpacing(true);
+                grid.setWidth(null);
 
-                int credits = moduleInfo.getInt("credit_weighting");
-                int ca = moduleInfo.getInt("ca_mark_percentage");
-                int exam = moduleInfo.getInt("final_exam_percentage");
+                if (!moduleInfo.getBoolean("approved")) {
+                    //module not approved yet, so display warning message
+                    grid.addComponent(new Label("This module has not yet been approved by the administrator", ContentMode.TEXT));
 
-                // populate tab with module info
-                grid.addComponent(new Label("Module:"));
-                grid.addComponent(new Label(moduleInfo.getString("name")));
-                grid.addComponent(new Label("Credits:"));
-                grid.addComponent(new Label(Integer.toString(credits)));
-                grid.addComponent(new Label("C.A:"));
-                grid.addComponent(new Label(ca + "%"));
-                grid.addComponent(new Label("Final Exam:"));
-                grid.addComponent(new Label(exam + "%"));
-                grid.addComponent(new Label("Results Submitted:"));
-                grid.addComponent(new Label(moduleInfo.getString("num_results")));
+                } else {
 
-                grid.addComponent(new Button("Download Template"),0,5);
-                templateResource = createResource(code, credits, ca, exam);
-                templateDownloader = new FileDownloader(templateResource);
-                templateDownloader.extend((AbstractComponent) grid.getComponent(0, 5));
+                    int credits = moduleInfo.getInt("credit_weighting");
+                    int ca = moduleInfo.getInt("ca_mark_percentage");
+                    int exam = moduleInfo.getInt("final_exam_percentage");
 
-                grid.addComponent(new Button("View Results", new Button.ClickListener() {
-                    @Override
-                    public void buttonClick(Button.ClickEvent clickEvent) {
-                        displayResultsWindow();
-                    }
-                }),1,5);
+                    // populate tab with module info
+                    grid.addComponent(new Label("Module:"));
+                    grid.addComponent(new Label(moduleInfo.getString("name")));
+                    grid.addComponent(new Label("Credits:"));
+                    grid.addComponent(new Label(Integer.toString(credits)));
+                    grid.addComponent(new Label("C.A:"));
+                    grid.addComponent(new Label(ca + "%"));
+                    grid.addComponent(new Label("Final Exam:"));
+                    grid.addComponent(new Label(exam + "%"));
+                    grid.addComponent(new Label("Results Submitted:"));
+                    grid.addComponent(new Label(moduleInfo.getString("num_results")));
 
-                grid.addComponent(new Button("Upload Results", new Button.ClickListener() {
-                    @Override
-                    public void buttonClick(Button.ClickEvent clickEvent) {
-                        displayUploadWindow(code);
-                    }
-                }),0,6);
-                grid.getComponent(0,6).setWidth("100%");
+                    grid.addComponent(new Button("Download Template"), 0, 5);
+                    templateResource = createResource(code, credits, ca, exam);
+                    templateDownloader = new FileDownloader(templateResource);
+                    templateDownloader.extend((AbstractComponent) grid.getComponent(0, 5));
 
-                grid.addComponent(new Button("Get Report"),1,6);
-                reportResource = createResource(code);
-                reportDownloader = new FileDownloader(reportResource);
-                reportDownloader.extend((AbstractComponent) grid.getComponent(1, 6));
-                //grid.getComponent(1,6).setWidth("131px");
+                    grid.addComponent(new Button("View Results", new Button.ClickListener() {
+                        @Override
+                        public void buttonClick(Button.ClickEvent clickEvent) {
+                            displayResultsWindow();
+                        }
+                    }), 1, 5);
 
+                    grid.addComponent(new Button("Upload Results", new Button.ClickListener() {
+                        @Override
+                        public void buttonClick(Button.ClickEvent clickEvent) {
+                            displayUploadWindow(code);
+                        }
+                    }), 0, 6);
+                    grid.getComponent(0, 6).setWidth("100%");
+
+                    grid.addComponent(new Button("Get Report"), 1, 6);
+                    reportResource = createResource(code);
+                    reportDownloader = new FileDownloader(reportResource);
+                    reportDownloader.extend((AbstractComponent) grid.getComponent(1, 6));
+                    //grid.getComponent(1,6).setWidth("131px");
+
+                }
+
+                grid.setCaption(code);
+                tabsheet.addTab(grid);
             }
-
-            grid.setCaption(code);
-            tabsheet.addTab(grid);
         }
-
         currentTab = tabsheet.getTab(0).getCaption();
 
         buttons = new HorizontalLayout();
@@ -499,7 +487,6 @@ public class UserHomeView extends VerticalLayout implements View {
         addNewModuleWindow.setWidth("440px");
         addNewModuleWindow.setHeight("-1px");
         addNewModuleWindow.setModal(true);
-        addNewModuleWindow.setClosable(false);
         addNewModuleWindow.setResizable(false);
         addNewModuleWindow.center();
         addNewModuleWindow.setImmediate(true);
@@ -511,28 +498,12 @@ public class UserHomeView extends VerticalLayout implements View {
         addNewModuleWindow.setContent(form);
 
         final TextField moduleCode = new TextField("Module Code");
+        moduleCode.addValueChangeListener(new FieldChangeListener(moduleCode));
         form.addComponent(moduleCode);
-        moduleCode.addValueChangeListener(new Property.ValueChangeListener() {
-            @Override
-            public void valueChange(Property.ValueChangeEvent valueChangeEvent) {
-
-                if (! moduleCode.getValue().trim().isEmpty()) {
-                    moduleCode.removeStyleName("emptyField");
-                }
-            }
-        });
 
         final TextField moduleTitle = new TextField("Module Title");
+        moduleTitle.addValueChangeListener(new FieldChangeListener(moduleTitle));
         form.addComponent(moduleTitle);
-        moduleTitle.addValueChangeListener(new Property.ValueChangeListener() {
-            @Override
-            public void valueChange(Property.ValueChangeEvent valueChangeEvent) {
-
-                if (! moduleTitle.getValue().trim().isEmpty()) {
-                    moduleTitle.removeStyleName("emptyField");
-                }
-            }
-        });
 
         final ComboBox creditCombo = new ComboBox("Credit Weighting");
         form.addComponent(creditCombo);
@@ -576,7 +547,8 @@ public class UserHomeView extends VerticalLayout implements View {
                     int examValue = 100 - newValue;
                     if (examValue > 100 || examValue < 0) {
                         ca.addStyleName("emptyField");
-                        Notification.show("Invalid range: Please enter a number 0-100 ");
+                        new Notification("Invalid range: Please enter a number 0-100",
+                                Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
                     } else {
                         ca.removeStyleName("emptyField");
                         exam.setValue(Integer.toString(examValue));
@@ -605,7 +577,8 @@ public class UserHomeView extends VerticalLayout implements View {
                     int caValue = 100 - newValue;
                     if (caValue > 100 || caValue < 0) {
                         exam.addStyleName("emptyField");
-                        Notification.show("Invalid range: Please enter a number 0-100 ");
+                        new Notification("Invalid range: Please enter a number 0-100",
+                                Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
                     } else {
                         exam.removeStyleName("emptyField");
                         ca.setValue(Integer.toString(caValue));
@@ -700,6 +673,8 @@ public class UserHomeView extends VerticalLayout implements View {
             }
         });
 
+        submit.addStyleName("buttons");
+        cancel.addStyleName("buttons");
         buttons.addComponent(submit);
         buttons.addComponent(cancel);
         form.addComponent(buttons);

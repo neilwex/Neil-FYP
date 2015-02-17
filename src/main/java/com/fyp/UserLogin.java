@@ -105,7 +105,8 @@ public class UserLogin extends VerticalLayout implements View {
 
                         } else {
                             System.out.println("Login Failed!");
-                            Notification.show("Login Failed");
+                            new Notification("Login Failed", Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
+                            //Notification.show("Login Failed");
                         }
 
                     } catch (SQLException e) {
@@ -193,12 +194,12 @@ public class UserLogin extends VerticalLayout implements View {
         if ( enteredUsername.equals("") ) {
             System.out.println("Username not provided");
             loginNameField.addStyleName("emptyField");
-            Notification.show("A username must be provided");
+            new Notification("A username must be provided", Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
             return false;
         } else if (enteredPassword.equals("") ) {
             System.out.println("Password not provided");
             password.addStyleName("emptyField");
-            Notification.show("A password must be provided");
+            new Notification("A password must be provided", Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
             return false;
         }
 

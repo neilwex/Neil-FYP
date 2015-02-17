@@ -75,7 +75,6 @@ public class Database {
     public static void getAllResults() throws SQLException {
 
         setupConnection();
-
         System.out.println("Calling method getAllResults...");
         sql = "SELECT * FROM results";
         ps = conn.prepareStatement(sql);
@@ -103,7 +102,6 @@ public class Database {
     public static void getAverageGrade(String module) throws SQLException {
 
         setupConnection();
-
         System.out.println("Calling method getAverageGrade...");
 
         sql = "SELECT AVG(ca_mark + final_exam_mark) AS average FROM results WHERE module_code = ?";
@@ -120,7 +118,6 @@ public class Database {
     public static void getMaxGrade (String module) throws SQLException {
 
         setupConnection();
-
         System.out.println("Calling method getMaxGrade...");
         sql = "SELECT MAX(ca_mark + final_exam_mark) AS max FROM results WHERE module_code = ?";
         ps = conn.prepareStatement(sql);
@@ -136,7 +133,6 @@ public class Database {
     public static void getMinGrade (String module) throws SQLException {
 
         setupConnection();
-
         System.out.println("Calling method getMinGrade...");
 
         sql = "SELECT MIN(ca_mark + final_exam_mark) AS min FROM results WHERE module_code = ?";
@@ -153,7 +149,6 @@ public class Database {
     public static void getStdDev (String module) throws SQLException {
 
         setupConnection();
-
         System.out.println("Calling method getStdDev...");
 
         sql = "SELECT stddev(ca_mark + final_exam_mark) AS stddev FROM results WHERE module_code = ?";
@@ -342,19 +337,8 @@ public class Database {
      */
     public static boolean createUser(String newUser, String forename, String surname, String newPassword)
             throws SQLException, NoSuchAlgorithmException, UnsupportedEncodingException {
+
         setupConnection();
-
-        //check if given username already exists in database
-        ps = conn.prepareStatement("SELECT COUNT(*) FROM users WHERE userID = ?");
-        ps.setString(1, newUser);
-        rs = ps.executeQuery();
-        rs.next();
-        if (rs.getInt(1) != 0) { // if rows found, then username already exists
-            System.out.println("Given username already exists");
-            return false;
-        }
-
-        System.out.println("Given username doesn't already exist");
         System.out.println("Creating new user...");
 
         // Uses a secure Random not a simple Random
@@ -485,51 +469,38 @@ public class Database {
     public static ResultSet getList (String query) throws SQLException {
 
         setupConnection();
-
         System.out.println("Calling method getList...");
+
         ps = conn.prepareStatement(query);
-        rs = ps.executeQuery();
-
-        System.out.println("List compiled");
-
-        return rs;
+        return ps.executeQuery();
     }
 
     public static ResultSet getModuleStats(int accountID) throws SQLException {
 
         setupConnection();
-
         System.out.println("Calling method getModuleStats...");
 
         sql = "SELECT code, name, credit_weighting, ca_mark_percentage, final_exam_percentage, approved, COUNT(results.student_num) AS num_results" +
                 " FROM modules LEFT JOIN results ON results.module_code = modules.code WHERE accountID = ? GROUP BY code";
         ps = conn.prepareStatement(sql);
         ps.setInt(1, accountID);
-        rs = ps.executeQuery();
-
-        System.out.println("Tab info retrieved");
-        return rs;
+        return ps.executeQuery();
     }
 
     public static ResultSet getModuleStats(String module) throws SQLException {
 
         setupConnection();
-
         System.out.println("Calling method getModuleStats...");
 
         sql = "SELECT credit_weighting, ca_mark_percentage, final_exam_percentage" +
                 " FROM modules WHERE code = ?";
         ps = conn.prepareStatement(sql);
         ps.setString(1, module);
-        rs = ps.executeQuery();
-
-        System.out.println("Tab info retrieved");
-        return rs;
+        return ps.executeQuery();
     }
 
     public static ResultSet getModuleResults(String module) throws SQLException {
         setupConnection();
-
         System.out.println("Calling method getModuleResults...");
 
         sql = "SELECT * FROM ( " +
@@ -545,16 +516,12 @@ public class Database {
 
         ps = conn.prepareStatement(sql);
         ps.setString(1, module);
-        rs = ps.executeQuery();
-
-        System.out.println("Module info retrieved");
-        return rs;
+        return ps.executeQuery();
     }
 
     public static ResultSet getModuleAverages(String code) throws SQLException {
 
         setupConnection();
-
         System.out.println("Calling method getModuleResults...");
 
         sql = "SELECT AVG(ca_mark) AS ca, AVG(final_exam_mark) AS exam, AVG(ca_mark + final_exam_mark) AS total," +
@@ -563,14 +530,14 @@ public class Database {
 
         ps = conn.prepareStatement(sql);
         ps.setString(1, code);
-        rs = ps.executeQuery();
-
-        System.out.println("Module averages retrieved");
-        return rs;
+        return ps.executeQuery();
     }
 
 
     public static int getNumStudents(String module) throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method getNumStudents...");
 
         sql = "SELECT COUNT(student_num) AS count FROM results WHERE module_code = ?";
         ps = conn.prepareStatement(sql);
@@ -583,6 +550,9 @@ public class Database {
     }
 
     public static int getCredits(String code) throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method getCredits...");
 
         sql = "SELECT credit_weighting FROM modules WHERE code = ?";
         ps = conn.prepareStatement(sql);
@@ -618,7 +588,6 @@ public class Database {
     public static boolean addNewModule(String code, String title, String credits, String ca, String exam, int accountID) throws SQLException {
 
         setupConnection();
-
         System.out.println("Calling method addNewModule...");
 
         sql = "INSERT INTO modules VALUES (?,?,?,?,?,?,0);";
@@ -637,7 +606,6 @@ public class Database {
     public static boolean checkModuleCode(String moduleCode) throws SQLException {
 
         setupConnection();
-
         System.out.println("Calling method addNewModule...");
 
         sql = "SELECT COUNT(code) AS count FROM modules WHERE code = ?";
@@ -646,11 +614,64 @@ public class Database {
         rs = ps.executeQuery();
         rs.next();
 
-        // re.getInt(1) returns the number of modules existing with code moduleCode
+        // rs.getInt(1) returns the number of modules existing with code moduleCode
         return rs.getInt(1) > 0;
     }
 
-    public static ResultSet getResults(String module) {
+    /*public static ResultSet getResults(String module) {
         return null;
+    }*/
+
+    public static boolean checkUserExists(String username) throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method checkUserExists...");
+
+        sql = "SELECT COUNT(*) AS count FROM users WHERE userID = ?";
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, username);
+        rs = ps.executeQuery();
+        rs.next();
+
+        // rs.getInt(1) will be greater than 0 if username already exists
+        return rs.getInt(1) > 0;
+    }
+
+    public static ResultSet getPendingModules() throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method getPendingModules...");
+
+        sql = "SELECT code, name, credit_weighting, ca_mark_percentage, final_exam_percentage," +
+                "(CONCAT(users.forename, \" \", users.surname)) AS lecturer " +
+                "FROM modules JOIN users ON modules.accountID = users.accountID  WHERE approved = FALSE;";
+        ps = conn.prepareStatement(sql);
+        return ps.executeQuery();
+    }
+
+    public static boolean approveModule(String code) throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method approveModule...");
+
+        sql = "UPDATE modules SET approved = TRUE WHERE code = ?";
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, code);
+
+        // executeUpdate returns 0 if unsuccessful
+        return ps.executeUpdate() > 0;
+    }
+
+    public static boolean deleteModule(String code) throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method deleteModule...");
+
+        sql = "DELETE FROM modules WHERE code = ?";
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, code);
+
+        // executeUpdate returns 0 if unsuccessful
+        return ps.executeUpdate() > 0;
     }
 } // end class

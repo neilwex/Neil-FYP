@@ -11964,3 +11964,8 @@ div.v-layout.v-horizontal.v-widget {
 .mytheme .retrievalContent {
 	margin-top: 100px;
 }
+
+.mytheme .menuBar .v-menubar-menuitem-highlight {
+	background: #7ACAFF;
+	font-weight: bold;
+}
