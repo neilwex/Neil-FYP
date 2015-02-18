@@ -60,22 +60,35 @@ public class jOpenDocumentCreateTest {
 
         //create new spreadsheet for report
         final File file = new File("files\\results.ods");
-        SpreadSheet.create(2,10,num_students + 10).saveAs(file);
+        SpreadSheet.create(1,10,num_students + 20).saveAs(file);
         Sheet sheet = SpreadSheet.createFromFile(file).getSheet(0);
 
+        return fillReport(file, sheet, num_students, credits, rows, moduleInfo );
+    }
+
+    private File fillReport(File file, Sheet sheet, int num_students, int credits, ResultSet rows, ResultSet moduleInfo) throws SQLException, IOException {
+
+        sheet.getCellAt("A1").setValue("Module:");
+        sheet.getCellAt("B1").setValue("CODE HERE");
+        sheet.getCellAt("A2").setValue("Lecturer");
+        sheet.getCellAt("B2").setValue("LECTURER HERE");
+        sheet.getCellAt("A3").setValue("# Students:");
+        sheet.getCellAt("B3").setValue(num_students);
+        sheet.getCellAt("A5").setValue("DISCLAIMER: the contents of this report are intended to be read-only. Please do not attempt to modify any data.");
+
         // setup column headers
-        sheet.getCellAt("A1").setValue("Student");
-        sheet.getCellAt("B1").setValue("CA");
-        sheet.getCellAt("C1").setValue("Final Exam");
-        sheet.getCellAt("D1").setValue("Total");
-        sheet.getCellAt("E1").setValue("Percentage");
-        sheet.getCellAt("F1").setValue("Pass");
-        sheet.getCellAt("G1").setValue("Award");
-        sheet.getCellAt("H1").setValue("GPA Grade");
-        sheet.getCellAt("I1").setValue("Class Rank");
+        sheet.getCellAt("A7").setValue("Student");
+        sheet.getCellAt("B7").setValue("CA");
+        sheet.getCellAt("C7").setValue("Final Exam");
+        sheet.getCellAt("D7").setValue("Total");
+        sheet.getCellAt("E7").setValue("Percentage");
+        sheet.getCellAt("F7").setValue("Pass");
+        sheet.getCellAt("G7").setValue("Award");
+        sheet.getCellAt("H7").setValue("GPA Grade");
+        sheet.getCellAt("I7").setValue("Class Rank");
 
         DecimalFormat df = new DecimalFormat("#.##");
-        int row = 2;
+        int row = 8;
         while (rows.next()) { //add data by row
 
             // Round percentage to 2 decimal points

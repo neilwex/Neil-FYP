@@ -24,6 +24,12 @@ public class AdminHomeView extends VerticalLayout implements View {
     private VaadinSession session;
     private VerticalLayout contentLayout;
 
+    private String VIEW_MODS = "View Modules";
+    private String GEN_REPORT = "Generate Report";
+    private String VIEW_PENDING = "View Pending Modules";
+    private String ADD_USER = "Add User";
+    private TabSheet tabsheet;
+
     @Override
     public void enter(ViewChangeListener.ViewChangeEvent event) {
 
@@ -46,9 +52,9 @@ public class AdminHomeView extends VerticalLayout implements View {
         Page.getCurrent().setTitle("Admin Home");
 
         // session information
-        SessionInfo sessionInfo1 = new SessionInfo(session, getUI());
-        root.addComponent(sessionInfo1);
-        root.setComponentAlignment(sessionInfo1, Alignment.TOP_RIGHT);
+        SessionInfo sessionInfo = new SessionInfo(session, getUI());
+        root.addComponent(sessionInfo);
+        root.setComponentAlignment(sessionInfo, Alignment.TOP_RIGHT);
 
         Label newHeading = new Label("Admin Home");
         newHeading.addStyleName("heading");
@@ -67,6 +73,7 @@ public class AdminHomeView extends VerticalLayout implements View {
 
             public void menuSelected(MenuBar.MenuItem selectedItem) {
                 System.out.println("getText(): " + selectedItem.getText());
+                System.out.println("getText(): " + selectedItem);
 
                 if (previous != null) {
                     previous.setStyleName(null);
@@ -75,7 +82,14 @@ public class AdminHomeView extends VerticalLayout implements View {
                 selectedItem.setStyleName("highlight");
                 previous = selectedItem;
 
-                if (selectedItem.getText().equals("View Pending Modules")) {
+                if (selectedItem.getText().equals(VIEW_MODS)) {
+
+                    try {
+                        displayModulesContent();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                } else if (selectedItem.getText().equals(VIEW_PENDING)) {
 
                     try {
                         displayPendingModulesContent();
@@ -83,7 +97,7 @@ public class AdminHomeView extends VerticalLayout implements View {
                         e.printStackTrace();
                     }
 
-                } else if (selectedItem.getText().equals("Add User")) {
+                } else if (selectedItem.getText().equals(ADD_USER)) {
 
                     displayAddUserContent();
                 }
@@ -91,13 +105,31 @@ public class AdminHomeView extends VerticalLayout implements View {
             }
         };
 
-        menuBar.addItem("View Modules",null,mycommand);
-        menuBar.addItem("Generate Report",null,mycommand);
-        menuBar.addItem("View Pending Modules",null,mycommand);
-        menuBar.addItem("Add User",null,mycommand);
+        menuBar.addItem(VIEW_MODS,null,mycommand);
+        menuBar.addItem(GEN_REPORT,null,mycommand);
+        menuBar.addItem(VIEW_PENDING,null,mycommand);
+        menuBar.addItem(ADD_USER,null,mycommand);
 
-        // add listeners to each of the menu item bars to show relevant component??
-        // of is separate views better?
+
+        try {
+            displayModulesContent();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * displays details of pending modules for approval
+     */
+    private void displayModulesContent() throws SQLException {
+
+        clearExistingContent();
+
+        final ResultSet moduleInfo = Database.getAllModuleStats();
+        tabsheet = new ModulesTabSheet(moduleInfo);
+        contentLayout.addComponent(tabsheet);
+
+        root.addComponent(contentLayout);
     }
 
     /**
@@ -360,4 +392,4 @@ public class AdminHomeView extends VerticalLayout implements View {
         contentLayout.removeAllComponents();
     }
 
-}
+} // end of class

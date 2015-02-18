@@ -475,6 +475,17 @@ public class Database {
         return ps.executeQuery();
     }
 
+    public static ResultSet getAllModuleStats() throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method getModuleStats...");
+
+        sql = "SELECT code, name, credit_weighting, ca_mark_percentage, final_exam_percentage, approved, COUNT(results.student_num) AS num_results" +
+                " FROM modules LEFT JOIN results ON results.module_code = modules.code WHERE approved = TRUE GROUP BY code";
+        ps = conn.prepareStatement(sql);
+        return ps.executeQuery();
+    }
+
     public static ResultSet getModuleStats(int accountID) throws SQLException {
 
         setupConnection();
