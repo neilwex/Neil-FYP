@@ -9,20 +9,6 @@
   // Include mytheme theme styles in your theme
   @include mytheme;
 
-  .v-tree-checkbox .v-tree-node-caption-unchecked div span {
-    background: url("img/checkbox-unchecked.png") no-repeat;
-    padding-left: 24px;
-  }
-
-  .v-tree-checkbox .v-tree-node-caption-checked div span {
-    background: url("img/checkbox-checked.png") no-repeat;
-    padding-left: 24px;
-  }
-
-  .v-tree-node-caption:hover {
-    background-color: lightgray ;
-    font-weight: bold;
-  }
 
   .buttons .v-button-caption, .v-upload .v-button .v-button-caption, .v-tabsheet .v-button .v-button-caption {
     font-weight: bold;
@@ -32,16 +18,11 @@
     color: darkblue;
   }
 
-  .v-tree-checkbox .v-tree-node-caption-checked {
-    background-color: #287ece;
-    color: white;
-  }
-
   .emptyField {
     background-color: pink;
   }
 
-  .submit, .retrievalButtons {
+  .submit {
     margin-top: 15px;
   }
 
@@ -64,29 +45,25 @@
     background-color: none;
   }
 
-  //.grid.v-margin-left   {padding-left:   20px;}
-  .mymargins.v-margin-right  {padding-right:  20px;}
-  .mymargins.v-margin-top    {padding-top:    40px;}
-  .mymargins.v-margin-bottom {padding-bottom: 80px;}
-  .grid {
-    //margin: 10px;
-  }
-
-  .instructions {
-    //margin-bottom: 50px;
-  }
-
   div.v-verticallayout.v-layout.v-vertical.v-widget.v-has-width > div > div > div > div > div:nth-child(2) > div > div.v-slot.v-slot-panel {
     margin-top: 25px;
   }
 
-  .retrievalContent {
-    margin-top: 100px;
+  .menuBar .v-menubar-menuitem-highlight {
+    background: #7ACAFF;
+    font-weight: bold;
   }
 
-  .menuBar .v-menubar-menuitem-highlight {
-    background: #7ACAFF; /* Dark blue */
+  .studentNum {
+    margin-top: 40px;
+  }
+
+  .v-table-footer  {
     font-weight: bold;
+  }
+
+  .studentInfo {
+    margin-bottom: 40px;
   }
 
 }

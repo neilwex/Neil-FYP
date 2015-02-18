@@ -11892,21 +11892,6 @@ div.v-layout.v-horizontal.v-widget {
 	overflow: hidden;
 }
 
-.mytheme .v-tree-checkbox .v-tree-node-caption-unchecked div span {
-	background: url("img/checkbox-unchecked.png") no-repeat;
-	padding-left: 24px;
-}
-
-.mytheme .v-tree-checkbox .v-tree-node-caption-checked div span {
-	background: url("img/checkbox-checked.png") no-repeat;
-	padding-left: 24px;
-}
-
-.mytheme .v-tree-node-caption:hover {
-	background-color: lightgray;
-	font-weight: bold;
-}
-
 .mytheme .buttons .v-button-caption, .mytheme .v-upload .v-button .v-button-caption, .mytheme .v-tabsheet .v-button .v-button-caption {
 	font-weight: bold;
 }
@@ -11915,16 +11900,11 @@ div.v-layout.v-horizontal.v-widget {
 	color: darkblue;
 }
 
-.mytheme .v-tree-checkbox .v-tree-node-caption-checked {
-	background-color: #287ece;
-	color: white;
-}
-
 .mytheme .emptyField {
 	background-color: pink;
 }
 
-.mytheme .submit, .mytheme .retrievalButtons {
+.mytheme .submit {
 	margin-top: 15px;
 }
 
@@ -11945,27 +11925,23 @@ div.v-layout.v-horizontal.v-widget {
 	background-color: none;
 }
 
-.mytheme .mymargins.v-margin-right {
-	padding-right: 20px;
-}
-
-.mytheme .mymargins.v-margin-top {
-	padding-top: 40px;
-}
-
-.mytheme .mymargins.v-margin-bottom {
-	padding-bottom: 80px;
-}
-
 .mytheme div.v-verticallayout.v-layout.v-vertical.v-widget.v-has-width > div > div > div > div > div:nth-child(2) > div > div.v-slot.v-slot-panel {
 	margin-top: 25px;
-}
-
-.mytheme .retrievalContent {
-	margin-top: 100px;
 }
 
 .mytheme .menuBar .v-menubar-menuitem-highlight {
 	background: #7ACAFF;
 	font-weight: bold;
+}
+
+.mytheme .studentNum {
+	margin-top: 40px;
+}
+
+.mytheme .v-table-footer {
+	font-weight: bold;
+}
+
+.mytheme .studentInfo {
+	margin-bottom: 40px;
 }

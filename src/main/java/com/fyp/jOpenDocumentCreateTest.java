@@ -56,17 +56,17 @@ public class jOpenDocumentCreateTest {
     }
 
 
-    public File createReport(int num_students, int credits, ResultSet rows, ResultSet moduleInfo) throws SQLException, IOException {
+    public File createModuleReport(int num_students, int credits, ResultSet rows, ResultSet moduleInfo) throws SQLException, IOException {
 
         //create new spreadsheet for report
         final File file = new File("files\\results.ods");
         SpreadSheet.create(1,10,num_students + 20).saveAs(file);
         Sheet sheet = SpreadSheet.createFromFile(file).getSheet(0);
 
-        return fillReport(file, sheet, num_students, credits, rows, moduleInfo );
+        return fillModuleReport(file, sheet, num_students, credits, rows, moduleInfo);
     }
 
-    private File fillReport(File file, Sheet sheet, int num_students, int credits, ResultSet rows, ResultSet moduleInfo) throws SQLException, IOException {
+    private File fillModuleReport(File file, Sheet sheet, int num_students, int credits, ResultSet rows, ResultSet moduleInfo) throws SQLException, IOException {
 
         sheet.getCellAt("A1").setValue("Module:");
         sheet.getCellAt("B1").setValue("CODE HERE");
@@ -135,4 +135,76 @@ public class jOpenDocumentCreateTest {
         System.out.println("New report created");
         return file;
     }
+
+    public File createStudentReport(String student, ResultSet rows) throws IOException, SQLException {
+
+        //create new spreadsheet for report
+        final File file = new File("files\\results.ods");
+        SpreadSheet.create(1,10,20).saveAs(file);
+        Sheet sheet = SpreadSheet.createFromFile(file).getSheet(0);
+
+        return fillStudentReport(file, sheet, student, rows);
+    }
+
+    private File fillStudentReport(File file, Sheet sheet, String student, ResultSet rows) throws IOException, SQLException {
+
+        sheet.getCellAt("A1").setValue("Student:");
+        sheet.getCellAt("B1").setValue(student);
+        sheet.getCellAt("A3").setValue("DISCLAIMER: the contents of this report are intended to be read-only. Please do not attempt to modify any data.");
+
+        // setup column headers
+        sheet.getCellAt("A5").setValue("Module");
+        sheet.getCellAt("B5").setValue("Credits");
+        sheet.getCellAt("C5").setValue("CA");
+        sheet.getCellAt("D5").setValue("Final Exam");
+        sheet.getCellAt("E5").setValue("Total");
+        sheet.getCellAt("F5").setValue("Percentage");
+        sheet.getCellAt("G5").setValue("Pass");
+        sheet.getCellAt("H5").setValue("Award");
+        sheet.getCellAt("I5").setValue("GPA Grade");
+
+        DecimalFormat df = new DecimalFormat("#.##");
+        int totalCredits = 0;
+        int totalMarks = 0;
+
+        int row = 6;
+        while (rows.next()) { //add data by row
+
+            int ca = rows.getInt("ca_mark");
+            int exam = rows.getInt("final_exam_mark");
+            int credits = rows.getInt("credit_weighting");
+
+            // Round percentage to 2 decimal points
+            double percentage = Double.parseDouble(df.format((ca + exam) * 5.0 / credits));
+
+            sheet.getCellAt("A" + row).setValue(rows.getString("module_code"));
+            sheet.getCellAt("B" + row).setValue(credits);
+            sheet.getCellAt("C" + row).setValue(ca);
+            sheet.getCellAt("D" + row).setValue(exam);
+            sheet.getCellAt("E" + row).setValue(ca + exam);
+            sheet.getCellAt("F" + row).setValue(percentage);
+            sheet.getCellAt("G" + row).setBackgroundColor(percentage >= Database.PASS_MARK ? Color.GREEN : Color.RED);
+            sheet.getCellAt("H" + row).setValue(GradeCalculator.getAward(percentage));
+            sheet.getCellAt("I" + row).setValue(GradeCalculator.getGPGrade(percentage));
+
+            totalCredits += credits;
+            totalMarks += ca + exam;
+
+            row++;
+        }
+
+        row++;
+        double overallPercentage = totalMarks * 5.0 / totalCredits;
+
+        sheet.getCellAt("A" + row).setValue("OVERALL");
+        sheet.getCellAt("B" + row).setValue(totalCredits);
+        sheet.getCellAt("F" + row).setValue(df.format(overallPercentage));
+        sheet.getCellAt("H" + row).setValue(GradeCalculator.getAward(overallPercentage));
+        sheet.getCellAt("I" + row).setValue(GradeCalculator.getGPGrade(overallPercentage));
+
+        sheet.getSpreadSheet().saveAs(file);
+        System.out.println("New report created");
+        return file;
+    }
+
 }

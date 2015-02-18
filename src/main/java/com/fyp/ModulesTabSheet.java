@@ -64,7 +64,6 @@ public class ModulesTabSheet extends TabSheet {
                 // setup grid layout for each tab
                 GridLayout grid = new GridLayout(2, 9);
                 grid.setMargin(new MarginInfo(true, false, false, false));
-                grid.addStyleName("grid");
                 grid.setSpacing(true);
                 grid.setWidth(null);
 
@@ -126,7 +125,7 @@ public class ModulesTabSheet extends TabSheet {
     }
 
 
-    private StreamResource createResource(final String code) {
+    protected StreamResource createResource(final String code) {
         String filename = code + "Report.ods";
         return new StreamResource(new StreamResource.StreamSource() {
             @Override
@@ -145,7 +144,7 @@ public class ModulesTabSheet extends TabSheet {
                         jOpenDocumentCreateTest c = new jOpenDocumentCreateTest();
 
                         // create spreadsheet report for module
-                        file = c.createReport(num_students, modulesCredits, resultsData, moduleAverages);
+                        file = c.createModuleReport(num_students, modulesCredits, resultsData, moduleAverages);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -158,7 +157,7 @@ public class ModulesTabSheet extends TabSheet {
         }, filename);
     }
 
-    private StreamResource createResource(final String code, final int credits, final int ca, final int exam ) {
+    protected StreamResource createResource(final String code, final int credits, final int ca, final int exam ) {
         String filename = code + "Template.csv";
         return new StreamResource(new StreamResource.StreamSource() {
             @Override
@@ -178,8 +177,7 @@ public class ModulesTabSheet extends TabSheet {
         }, filename);
     }
 
-
-    private InputStream getInputStream(File file) {
+    protected static InputStream getInputStream(File file) {
         byte[] b;
 
         try {
@@ -215,7 +213,7 @@ public class ModulesTabSheet extends TabSheet {
         summaryWindow.setHeight("-1px");
 
         summaryWindow.setModal(true);
-        summaryWindow.setClosable(false);
+        summaryWindow.setClosable(true);
         summaryWindow.setResizable(false);
         summaryWindow.setContent(summaryContent);
         summaryWindow.center();
@@ -317,9 +315,8 @@ public class ModulesTabSheet extends TabSheet {
         ResultSet results = Database.getModuleResults(code);
         int credits = Database.getCredits(code);
 
+        // For rounding to 2 decimal points
         DecimalFormat df = new DecimalFormat("#.##");
-
-        // Round percentage to 2 decimal points
 
         while (results.next()) {
 

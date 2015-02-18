@@ -167,7 +167,7 @@ public class Database {
 
     }
 
-    public static void checkGrades(int student) throws SQLException {
+    public static void checkCredits(int student) throws SQLException {
 
         System.out.println("Getting student grades information...");
 
@@ -202,16 +202,14 @@ public class Database {
         boolean allPassed = true;
         // extract data from result set
         while(rs.next()){
+
             //Retrieve by column name
             String module_code  = rs.getString("module_code");
             int ca_mark = rs.getInt("ca_mark");
             int final_exam_mark = rs.getInt("final_exam_mark");
 
             //Display values
-            System.out.print("Module Code: " + module_code);
-            System.out.print(", CS Mark: " + ca_mark);
-            System.out.print(", Final Exam Mark: " + final_exam_mark);
-            System.out.print(", Overall Grade: " + (ca_mark + final_exam_mark));
+
             if ( ca_mark + final_exam_mark < PASS_MARK ) {
                 allPassed = false;
             }
@@ -685,4 +683,30 @@ public class Database {
         // executeUpdate returns 0 if unsuccessful
         return ps.executeUpdate() > 0;
     }
+
+    public static ResultSet getStudents() throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method getStudents...");
+
+        sql = "SELECT DISTINCT student_num FROM results";
+        ps = conn.prepareStatement(sql);
+
+        return ps.executeQuery();
+    }
+
+    public static ResultSet getStudentInfo(String student) throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method getStudentInfo...");
+
+        sql = "SELECT results.module_code, results.ca_mark, results.final_exam_mark, modules.credit_weighting " +
+              "FROM results INNER JOIN modules ON results.module_code = modules.code WHERE student_num = ?;";
+
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, student);
+        return ps.executeQuery();
+    }
+
+
 } // end class

@@ -1,16 +1,26 @@
 package com.fyp;
 
+import com.vaadin.data.Container;
+import com.vaadin.data.Property;
+import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
+import com.vaadin.server.FileDownloader;
 import com.vaadin.server.Page;
+import com.vaadin.server.StreamResource;
 import com.vaadin.server.VaadinSession;
 import com.vaadin.shared.ui.MarginInfo;
+import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.*;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 /**
@@ -23,12 +33,28 @@ public class AdminHomeView extends VerticalLayout implements View {
     protected static final String ADMIN_HOME = "adminHome";
     private VaadinSession session;
     private VerticalLayout contentLayout;
+    private TabSheet tabsheet;
 
     private String VIEW_MODS = "View Modules";
+    private String VIEW_STUDENTS = "View Students";
     private String GEN_REPORT = "Generate Report";
     private String VIEW_PENDING = "View Pending Modules";
     private String ADD_USER = "Add User";
-    private TabSheet tabsheet;
+
+    private NativeSelect studentSelection;
+    private Container studentMenu;
+    private VerticalLayout studentInfo;
+    private Container gradesContainer;
+
+    private final String MODULE = "Module";
+    private final String CREDITS = "Credits";
+    private final String CA = "CA";
+    private final String EXAM = "Exam";
+    private final String RESULT = "Result";
+    private final String PERCENT = "Percentage";
+    private final String AWARD = "Award";
+    private final String GPA = "GPA Grade";
+
 
     @Override
     public void enter(ViewChangeListener.ViewChangeEvent event) {
@@ -89,6 +115,14 @@ public class AdminHomeView extends VerticalLayout implements View {
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
+                } else if (selectedItem.getText().equals(VIEW_STUDENTS)) {
+
+                    try {
+                        displayStudentsContent();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+
                 } else if (selectedItem.getText().equals(VIEW_PENDING)) {
 
                     try {
@@ -106,16 +140,207 @@ public class AdminHomeView extends VerticalLayout implements View {
         };
 
         menuBar.addItem(VIEW_MODS,null,mycommand);
+        menuBar.addItem(VIEW_STUDENTS,null,mycommand);
         menuBar.addItem(GEN_REPORT,null,mycommand);
         menuBar.addItem(VIEW_PENDING,null,mycommand);
         menuBar.addItem(ADD_USER,null,mycommand);
 
+        contentLayout.addComponent(new Label("Please choose an option from the above navigation menu"));
+        root.addComponent(contentLayout);
+    }
 
-        try {
-            displayModulesContent();
-        } catch (SQLException e) {
-            e.printStackTrace();
+    /**
+     * displays details of students' grades
+     */
+    private void displayStudentsContent() throws SQLException {
+
+        clearExistingContent();
+
+        studentMenu = new IndexedContainer();
+        studentMenu.addContainerProperty("Student", String.class, null);
+
+        studentSelection = new NativeSelect("Select a student");
+        studentSelection.setImmediate(true);
+        studentSelection.setNullSelectionAllowed(false);
+
+        ResultSet students = Database.getStudents();
+
+        // Round percentage to 2 decimal points
+        while (students.next()) {
+
+            String studentNum = students.getString("student_num");
+
+            // add details as a row to table
+            studentMenu.addItem(studentNum);
+            studentMenu.getContainerProperty(studentNum, "Student").setValue(studentNum);
         }
+
+        // setup grid layout for each student
+        studentInfo = new VerticalLayout();
+        studentInfo.setSpacing(true);
+        studentInfo.addStyleName("studentInfo");
+
+        studentSelection.addValueChangeListener(new Property.ValueChangeListener() {
+            @Override
+            public void valueChange(Property.ValueChangeEvent valueChangeEvent) {
+
+                contentLayout.removeComponent(studentInfo);
+                studentInfo.removeAllComponents();
+
+                try {
+                    createStudentInfo(valueChangeEvent.getProperty().getValue().toString());
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+                contentLayout.addComponent(studentInfo);
+            }
+        });
+
+        studentSelection.setContainerDataSource(studentMenu);
+
+        contentLayout.addComponent(studentSelection);
+        root.addComponent(contentLayout);
+    }
+
+    /**
+     * creates grid with student information
+     */
+    private void createStudentInfo(final String student) throws SQLException {
+
+        Label studentNum = new Label("Student Num: " + student);
+        studentNum.addStyleName("studentNum");
+        studentInfo.addComponent(studentNum);
+
+        gradesContainer = new IndexedContainer();
+        gradesContainer.addContainerProperty(MODULE, String.class, null);
+        gradesContainer.addContainerProperty(CREDITS, Integer.class, null);
+        gradesContainer.addContainerProperty(CA, Integer.class, null);
+        gradesContainer.addContainerProperty(EXAM, Integer.class, null);
+        gradesContainer.addContainerProperty(RESULT, Integer.class, null);
+        gradesContainer.addContainerProperty(PERCENT, Double.class, null);
+        gradesContainer.addContainerProperty(AWARD, String.class, null);
+        gradesContainer.addContainerProperty(GPA, String.class, null);
+
+        Table resultsTable = new Table();
+        resultsTable.setSelectable(true);
+        resultsTable.setContainerDataSource(gradesContainer);
+
+        ResultSet results = Database.getStudentInfo(student);
+
+        // For rounding to 2 decimal points
+        DecimalFormat df = new DecimalFormat("#.##");
+
+        int creditsFailed = 0;
+        boolean passByComp = true;
+
+        int totalCredits = 0;
+        int totalMarks = 0;
+        while (results.next()) {
+
+            // get module specific data
+            String moduleCode = results.getString("module_code");
+            int ca = results.getInt("ca_mark");
+            int exam = results.getInt("final_exam_mark");
+            int credits = results.getInt("credit_weighting");
+            double percentage = Double.parseDouble(df.format((ca + exam) * 5.0 / credits));
+
+            // add details as a row to table
+            gradesContainer.addItem(moduleCode);
+            gradesContainer.getContainerProperty(moduleCode, MODULE).setValue(moduleCode);
+            gradesContainer.getContainerProperty(moduleCode, CREDITS).setValue(credits);
+            gradesContainer.getContainerProperty(moduleCode, CA).setValue(ca);
+            gradesContainer.getContainerProperty(moduleCode, EXAM).setValue(exam);
+            gradesContainer.getContainerProperty(moduleCode, RESULT).setValue(ca + exam);
+            gradesContainer.getContainerProperty(moduleCode, PERCENT).setValue(percentage);
+            gradesContainer.getContainerProperty(moduleCode, AWARD).setValue(GradeCalculator.getAward(percentage));
+            gradesContainer.getContainerProperty(moduleCode, GPA).setValue(GradeCalculator.getGPGrade(percentage));
+
+           if (percentage < Database.PASS_MARK) {
+               creditsFailed += credits;
+               if (percentage < Database.COMPENSATION_MARK) {
+                   passByComp = false;
+               }
+           }
+
+            totalCredits += credits;
+            totalMarks += ca + exam;
+        }
+
+        double overallPercentage = totalMarks * 5.0 / totalCredits;
+
+        // footer for totals/overall
+        resultsTable.setFooterVisible(true);
+        resultsTable.setColumnFooter(MODULE, "OVERALL");
+        resultsTable.setColumnFooter(CREDITS, Integer.toString(totalCredits));
+        resultsTable.setColumnFooter(PERCENT, df.format(overallPercentage));
+        resultsTable.setColumnFooter(AWARD, GradeCalculator.getAward(overallPercentage));
+        resultsTable.setColumnFooter(GPA, GradeCalculator.getGPGrade(overallPercentage));
+        resultsTable.setPageLength(resultsTable.size());
+
+        studentInfo.addComponent(resultsTable);
+
+        String notification;
+        if (totalCredits < 60) {
+            notification = "System has results for only " + totalCredits + " credits for student " + student + ".<br>" +
+                           "Please ensure all results have been submitted for this student";
+        } else if (totalCredits > 60) {
+            notification = "System has results for " + totalCredits + " credits for student " + student + ".<br>" +
+                           "Students should only be registered for a maximum of 60 credits.<br>" +
+                           "Please check these results again.";
+        } else { //correct number of credits
+            notification = "System has results for " + totalCredits + " credits for student " + student + ".<br>";
+
+            if (creditsFailed == 0) {
+                notification += "Student has passed all modules.";
+            } else if (creditsFailed > 10) {
+                notification += "Student has failed " + creditsFailed + " credits.<br>" +
+                                "Student is therefore ineligible to pass by compensation.";
+            } else { // failed between 0 and 10 credits
+
+                notification += "Student " + student + " has failed " + creditsFailed + " credits.<br>";
+
+                if (overallPercentage < Database.PASS_MARK) {
+                    notification += "Overall average is below 40% so student is ineligible to pass by compensation.";
+                } else if (passByComp) {
+                    notification += "Student's average in credits failed is sufficient enough to pass by compensation.";
+                } else {
+                    notification += "Student's average in credits failed is not sufficient to pass by compensation.";
+                }
+            }
+
+        }
+
+        studentInfo.addComponent(new Label(notification, ContentMode.HTML));
+        studentInfo.addComponent(new Button("Download Report"));
+
+        StreamResource reportResource = new StreamResource(new StreamResource.StreamSource() {
+            @Override
+            public InputStream getStream() {
+
+                File file = null;
+                try {
+
+                    //get student data from database
+                    ResultSet results = Database.getStudentInfo(student);
+
+                    try {
+                        jOpenDocumentCreateTest j = new jOpenDocumentCreateTest();
+
+                        // create spreadsheet report for module
+                        file = j.createStudentReport(student, results);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                return ModulesTabSheet.getInputStream(file);
+            }
+        }, "Student" + student + "Report.ods");
+        FileDownloader reportDownloader = new FileDownloader(reportResource);
+        reportDownloader.extend((AbstractComponent) studentInfo.getComponent(3));
+
     }
 
     /**
