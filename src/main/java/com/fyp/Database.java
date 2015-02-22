@@ -72,31 +72,16 @@ public class Database {
         System.out.println("Connection closed");
     }
 
-    public static void getAllResults() throws SQLException {
+    public static ResultSet getAllResults() throws SQLException {
 
         setupConnection();
         System.out.println("Calling method getAllResults...");
-        sql = "SELECT * FROM results";
+
+        sql = "SELECT student_num, code, (ca_mark + results.final_exam_mark) AS result, credit_weighting " +
+                "FROM results JOIN modules ON results.module_code = modules.code ORDER BY student_num, module_code;";
         ps = conn.prepareStatement(sql);
-        rs = ps.executeQuery(sql);
 
-        // extract data from result set
-        while(rs.next()){
-            //Retrieve by column name
-            String student_num  = rs.getString("student_num");
-            String module_code  = rs.getString("module_code");
-            int ca_mark = rs.getInt("ca_mark");
-            int final_exam_mark = rs.getInt("final_exam_mark");
-
-            //Display values
-            System.out.print("Student Number: " + student_num);
-            System.out.print(", Module Code: " + module_code);
-            System.out.print(", CS Mark: " + ca_mark);
-            System.out.print(", Final Exam Mark: " + final_exam_mark);
-            System.out.print(", Overall Grade: " + (ca_mark + final_exam_mark));
-            System.out.println(", Pass/Fail?: " + (ca_mark + final_exam_mark >= PASS_MARK ? "Pass" : "Fail" ));
-        }
-
+        return ps.executeQuery(sql);
     }
 
     public static void getAverageGrade(String module) throws SQLException {
@@ -543,19 +528,18 @@ public class Database {
     }
 
 
-    public static int getNumStudents(String module) throws SQLException {
+    public static ResultSet getModuleDetails(String module) throws SQLException {
 
         setupConnection();
         System.out.println("Calling method getNumStudents...");
 
-        sql = "SELECT COUNT(student_num) AS count FROM results WHERE module_code = ?";
+        sql = "SELECT COUNT(results.student_num) AS count, CONCAT(users.forename, \" \", users.surname) AS lecturer, " +
+                "modules.code, credit_weighting " +
+                "FROM results INNER JOIN modules ON results.module_code = modules.code " +
+                "INNER JOIN users ON users.accountID = modules.accountID WHERE module_code = ?;";
         ps = conn.prepareStatement(sql);
         ps.setString(1, module);
-        rs = ps.executeQuery();
-        rs.next();
-
-        //Retrieve by column name
-        return rs.getInt("count");
+        return ps.executeQuery();
     }
 
     public static int getCredits(String code) throws SQLException {
@@ -708,5 +692,108 @@ public class Database {
         return ps.executeQuery();
     }
 
+
+    public static int getTotalModules() throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method getTotalModules...");
+
+        sql = "SELECT COUNT(DISTINCT code) AS numMods FROM modules";
+        ps = conn.prepareStatement(sql);
+        rs = ps.executeQuery();
+        rs.next();
+
+        //Retrieve by column name
+        return rs.getInt("numMods");
+    }
+
+    public static boolean deleteAllModuleResults(String code) throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method deleteAllModuleResults...");
+
+        sql = "DELETE FROM results WHERE module_code = ?";
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, code);
+
+        // executeUpdate returns 0 if unsuccessful
+        return ps.executeUpdate() > 0;
+    }
+
+    public static boolean deleteSelectedModuleResult(String code, String studentNum) throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method deleteSelectedModuleResult...");
+
+        sql = "DELETE FROM results WHERE module_code = ? AND student_num = ?";
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, code);
+        ps.setString(2, studentNum);
+
+        // executeUpdate returns 0 if unsuccessful
+        return ps.executeUpdate() > 0;
+    }
+
+    public static double getOverallAverage() throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method getOverallAverage...");
+
+        sql = "SELECT ROUND(AVG((results.ca_mark + results.final_exam_mark) * 5 / modules.credit_weighting),2) AS AVG" +
+              " FROM results INNER JOIN modules ON results.module_code = modules.code;";
+        ps = conn.prepareStatement(sql);
+        rs = ps.executeQuery();
+        rs.next();
+
+        //Retrieve by column name
+        return rs.getDouble("AVG");
+    }
+
+    public static double getOverallStandardDev() throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method getOverallStandardDev...");
+
+        sql = "SELECT ROUND(STDDEV((results.ca_mark + results.final_exam_mark) * 5 / modules.credit_weighting),2) AS STDDEV" +
+              " FROM results INNER JOIN modules ON results.module_code = modules.code";
+        ps = conn.prepareStatement(sql);
+        rs = ps.executeQuery();
+        rs.next();
+
+        //Retrieve by column name
+        return rs.getDouble("STDDEV");
+    }
+
+    public static double getModuleAverage(String module) throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method getModuleAverage...");
+
+        sql = "SELECT ROUND(AVG( (results.ca_mark + results.final_exam_mark) * 5 / modules.credit_weighting),2) AS AVG" +
+              " FROM results INNER JOIN modules ON results.module_code = modules.code WHERE module_code = ?";
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, module);
+        rs = ps.executeQuery();
+        rs.next();
+
+        //Retrieve by column name
+        return rs.getDouble("AVG");
+    }
+
+    public static double getModuleStandardDev(String module) throws SQLException {
+
+        setupConnection();
+        System.out.println("Calling method getModuleStandardDev...");
+
+        sql = "SELECT ROUND(STDDEV( (results.ca_mark + results.final_exam_mark) * 5 / modules.credit_weighting),2) AS STDDEV\n" +
+                "FROM results INNER JOIN modules ON results.module_code = modules.code WHERE module_code = ?";
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, module);
+        rs = ps.executeQuery();
+        rs.next();
+
+        //Retrieve by column name
+        return rs.getDouble("STDDEV");
+    }
 
 } // end class

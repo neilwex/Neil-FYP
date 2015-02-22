@@ -11915,7 +11915,7 @@ div.v-layout.v-horizontal.v-widget {
 .mytheme .heading {
 	font-weight: bold;
 	font-size: 16px;
-	margin-bottom: 15px;
+	margin-bottom: 10px;
 }
 
 .mytheme .panel {
@@ -11935,7 +11935,7 @@ div.v-layout.v-horizontal.v-widget {
 }
 
 .mytheme .studentNum {
-	margin-top: 40px;
+	margin-top: 15px;
 }
 
 .mytheme .v-table-footer {
@@ -11943,5 +11943,5 @@ div.v-layout.v-horizontal.v-widget {
 }
 
 .mytheme .studentInfo {
-	margin-bottom: 40px;
+	margin-bottom: 20px;
 }

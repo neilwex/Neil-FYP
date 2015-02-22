@@ -1,5 +1,7 @@
 package com.fyp;
 
+import java.awt.*;
+
 /**
  * Created by Neil on 18/01/2015.
  */
@@ -70,6 +72,26 @@ public class GradeCalculator {
             award = awards[4];
         }  else {
             award = awards[5];
+        }
+
+        return award;
+    }
+
+    public static Color getAwardColor (double percentage) {
+
+        Color award;
+        if (percentage >= 70) {
+            award = Color.GREEN;
+        } else if (percentage >= 60) {
+            award = Color.BLUE;
+        } else if (percentage >= 50) {
+            award = Color.PINK;
+        } else if (percentage >= 45) {
+            award = Color.YELLOW;
+        } else if (percentage >= 40) {
+            award = Color.ORANGE;
+        }  else {
+            award = Color.RED;
         }
 
         return award;

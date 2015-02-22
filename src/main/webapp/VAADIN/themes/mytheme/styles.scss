@@ -34,7 +34,7 @@
     font-weight: bold;
     font-size: 16px;
     //text-decoration: underline;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
   }
 
   .panel {
@@ -55,7 +55,7 @@
   }
 
   .studentNum {
-    margin-top: 40px;
+    margin-top: 15px;
   }
 
   .v-table-footer  {
@@ -63,7 +63,12 @@
   }
 
   .studentInfo {
-    margin-bottom: 40px;
+    margin-bottom: 20px;
   }
+/*
+  .v-menubar-focus {
+    border: none;
+    padding: 0;
+  }*/
 
 }

@@ -20,7 +20,7 @@ public class SessionInfo extends HorizontalLayout{
 
         sessionInfo = new HorizontalLayout();
         sessionInfo.setSpacing(true);
-        sessionInfo.setHeight("120px");
+        sessionInfo.setHeight("100px");
         sessionInfo.setWidth(null);
         sessionInfo.setMargin(new MarginInfo(true, true, false, false));
         addComponent(sessionInfo);

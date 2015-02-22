@@ -2,10 +2,12 @@
 package com.fyp;
 
 import com.vaadin.data.Container;
+import com.vaadin.data.Property;
 import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.server.FileDownloader;
 import com.vaadin.server.StreamResource;
 import com.vaadin.shared.ui.MarginInfo;
+import com.vaadin.shared.ui.MultiSelectMode;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.*;
 
@@ -13,6 +15,8 @@ import java.io.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Neil on 18/02/2015.
@@ -20,6 +24,7 @@ import java.text.DecimalFormat;
 
 public class ModulesTabSheet extends TabSheet {
 
+    //private VaadinSession session;
     private StreamResource templateResource;
     private StreamResource reportResource;
     private FileDownloader templateDownloader;
@@ -30,6 +35,7 @@ public class ModulesTabSheet extends TabSheet {
     private VerticalLayout resultsContent;
     private Container container;
     private Table table;
+    private Set<String> selectedRows;
 
     private final String STUDENT_NUM = "Student Number";
     private final String CA = "CA";
@@ -39,6 +45,7 @@ public class ModulesTabSheet extends TabSheet {
     private final String AWARD = "Award";
     private final String GPA = "GPA Grade";
     private final String RANK = "Rank";
+    private HorizontalLayout buttons;
 
     public ModulesTabSheet(ResultSet moduleInfo) throws SQLException {
 
@@ -135,16 +142,15 @@ public class ModulesTabSheet extends TabSheet {
                 try {
 
                     //get module data from database
-                    int num_students = Database.getNumStudents(code);
-                    int modulesCredits = Database.getCredits(code);
+                    ResultSet moduleDetails = Database.getModuleDetails(code);
                     ResultSet resultsData = Database.getModuleResults(code);
                     ResultSet moduleAverages = Database.getModuleAverages(code);
 
                     try {
-                        jOpenDocumentCreateTest c = new jOpenDocumentCreateTest();
+                        jOpenDocument c = new jOpenDocument();
 
                         // create spreadsheet report for module
-                        file = c.createModuleReport(num_students, modulesCredits, resultsData, moduleAverages);
+                        file = c.createModuleReport(moduleDetails, resultsData, moduleAverages);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -284,12 +290,15 @@ public class ModulesTabSheet extends TabSheet {
     /**
      * Create the table, add the container to it and populate
      */
-    private void createAndFillTable(String code) throws SQLException {
+    private void createAndFillTable(final String code) throws SQLException {
 
         table = new Table();
         table.setContainerDataSource(container);
         table.setWidth("655px");
+        table.setHeight("500px");
         table.setSelectable(true);
+        table.setMultiSelect(true);
+        table.setMultiSelectMode(MultiSelectMode.SIMPLE);
         table.setImmediate(true);
 
         table.setColumnWidth(STUDENT_NUM, 130);
@@ -300,11 +309,137 @@ public class ModulesTabSheet extends TabSheet {
         table.setColumnWidth(AWARD, 70);
         table.setColumnWidth(GPA, 95);
         table.setColumnWidth(RANK, 60);
+        selectedRows = new HashSet<String>();
+        System.out.println("Size of selectedRows hashSet = " + selectedRows.size());
 
         fillTable(code);
+        table.addValueChangeListener(new Property.ValueChangeListener() {
+            @Override
+            public void valueChange(Property.ValueChangeEvent event) {
+                // get selected files from table
+                selectedRows = (Set<String>) table.getValue();
+            }
+        });
+
+        buttons = new HorizontalLayout();
+        buttons.setSpacing(true);
+        buttons.addComponent(new Button("Delete Selected", new Button.ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent clickEvent) {
+
+                if (selectedRows.size() == 0) {
+                    Notification.show("No results have been selected");
+                } else {
+
+                    final Window deleteWindow = new Window("Delete Selected Results for " + code);
+                    VerticalLayout deleteContents = new VerticalLayout();
+                    deleteContents.setMargin(true);
+                    deleteContents.setSpacing(true);
+                    deleteWindow.setWidth("-1px");
+                    deleteWindow.setHeight("-1px");
+
+                    deleteWindow.setModal(true);
+                    deleteWindow.setResizable(false);
+                    deleteWindow.setContent(deleteContents);
+                    deleteWindow.center();
+                    deleteWindow.setImmediate(true);
+                    deleteContents.addComponent(new Label("Are you sure you want to delete the selected results?<br>" +
+                            "Results cannot be retrieved after deleting.", ContentMode.HTML));
+                    HorizontalLayout deleteButtons = new HorizontalLayout();
+                    deleteButtons.setSpacing(true);
+                    deleteContents.addComponent(deleteButtons);
+                    deleteContents.setComponentAlignment(deleteButtons, Alignment.BOTTOM_CENTER);
+                    deleteButtons.addComponent(new Button("Delete Selected", new Button.ClickListener() {
+                        @Override
+                        public void buttonClick(Button.ClickEvent clickEvent) {
+                            try {
+                                for (String row : selectedRows) {
+                                    Database.deleteSelectedModuleResult(code, row);
+                                }
+                            } catch (SQLException e) {
+                                e.printStackTrace();
+                            }
+
+                            deleteWindow.close();
+                            resultsWindow.close();
+                            Notification.show("Selected results deleted for " + code);
+
+                            // refresh page
+                            UI.getCurrent().getNavigator().navigateTo(getSession().getAttribute("view").toString());
+                        }
+                }));
+                deleteButtons.addComponent(new Button("Cancel", new Button.ClickListener() {
+                    @Override
+                    public void buttonClick(Button.ClickEvent clickEvent) {
+                        table.setValue(null); // deselect all rows
+                        deleteWindow.close();
+                    }
+                }));
+                getUI().addWindow(deleteWindow);
+            }
+            }
+        }));
+        buttons.addComponent(new Button("Clear", new Button.ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent event) {
+                table.setValue(null); // deselect all rows
+            }
+        }));
+
+        buttons.addComponent(new Button("Delete All", new Button.ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent clickEvent) {
+                final Window deleteWindow = new Window("Delete All Results for " + code);
+                VerticalLayout deleteContents = new VerticalLayout();
+                deleteContents.setMargin(true);
+                deleteContents.setSpacing(true);
+                deleteWindow.setWidth("-1px");
+                deleteWindow.setHeight("-1px");
+
+                deleteWindow.setModal(true);
+                deleteWindow.setResizable(false);
+                deleteWindow.setContent(deleteContents);
+                deleteWindow.center();
+                deleteWindow.setImmediate(true);
+                deleteContents.addComponent(new Label("Are you sure you want to delete all results?<br>" +
+                                                "Results cannot be retrieved after deleting.", ContentMode.HTML));
+                HorizontalLayout deleteAllButtons = new HorizontalLayout();
+                deleteAllButtons.setSpacing(true);
+                deleteContents.addComponent(deleteAllButtons);
+                deleteContents.setComponentAlignment(deleteAllButtons, Alignment.BOTTOM_CENTER);
+                deleteAllButtons.addComponent(new Button("Delete All", new Button.ClickListener() {
+                    @Override
+                    public void buttonClick(Button.ClickEvent clickEvent) {
+                        try {
+                            Database.deleteAllModuleResults(code);
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+
+                        deleteWindow.close();
+                        resultsWindow.close();
+                        Notification.show("All results deleted for " + code);
+
+                        // refresh page
+                        UI.getCurrent().getNavigator().navigateTo(getSession().getAttribute("view").toString());
+                    }
+                }));
+                deleteAllButtons.addComponent(new Button("Cancel", new Button.ClickListener() {
+                    @Override
+                    public void buttonClick(Button.ClickEvent clickEvent) {
+                        table.setValue(null); // deselect all rows
+                        deleteWindow.close();
+                    }
+                }));
+                getUI().addWindow(deleteWindow);
+            }
+        }));
 
         resultsContent.addComponent(table);
+        resultsContent.addComponent(buttons);
         resultsContent.setComponentAlignment(table, Alignment.MIDDLE_CENTER);
+        resultsContent.setComponentAlignment(buttons, Alignment.BOTTOM_CENTER);
+
     }
 
     /**

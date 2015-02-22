@@ -38,6 +38,7 @@ public class AdminHomeView extends VerticalLayout implements View {
     private String VIEW_MODS = "View Modules";
     private String VIEW_STUDENTS = "View Students";
     private String GEN_REPORT = "Generate Report";
+    private String STANDARDIZED_REPORT = "Standarized Report";
     private String VIEW_PENDING = "View Pending Modules";
     private String ADD_USER = "Add User";
 
@@ -60,6 +61,7 @@ public class AdminHomeView extends VerticalLayout implements View {
     public void enter(ViewChangeListener.ViewChangeEvent event) {
 
         session = getSession();
+        session.setAttribute("view", AdminHomeView.ADMIN_HOME);
         initLayout();
     }
 
@@ -92,14 +94,13 @@ public class AdminHomeView extends VerticalLayout implements View {
         root.addComponent(menuBar);
 
         contentLayout = new VerticalLayout();
+        contentLayout.setSpacing(true);
 
         // Define a common menu command for all the menu items.
         MenuBar.Command mycommand = new MenuBar.Command() {
             MenuBar.MenuItem previous = null;
 
             public void menuSelected(MenuBar.MenuItem selectedItem) {
-                System.out.println("getText(): " + selectedItem.getText());
-                System.out.println("getText(): " + selectedItem);
 
                 if (previous != null) {
                     previous.setStyleName(null);
@@ -123,6 +124,22 @@ public class AdminHomeView extends VerticalLayout implements View {
                         e.printStackTrace();
                     }
 
+                } else if (selectedItem.getText().equals(GEN_REPORT)) {
+
+                    try {
+                        displayGenerateReportContent();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+
+                } else if (selectedItem.getText().equals(STANDARDIZED_REPORT)) {
+
+                    try {
+                        displayStandarizedReportContent();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+
                 } else if (selectedItem.getText().equals(VIEW_PENDING)) {
 
                     try {
@@ -142,10 +159,88 @@ public class AdminHomeView extends VerticalLayout implements View {
         menuBar.addItem(VIEW_MODS,null,mycommand);
         menuBar.addItem(VIEW_STUDENTS,null,mycommand);
         menuBar.addItem(GEN_REPORT,null,mycommand);
+        menuBar.addItem(STANDARDIZED_REPORT,null,mycommand);
         menuBar.addItem(VIEW_PENDING,null,mycommand);
         menuBar.addItem(ADD_USER,null,mycommand);
 
         contentLayout.addComponent(new Label("Please choose an option from the above navigation menu"));
+        root.addComponent(contentLayout);
+    }
+
+    private void displayStandarizedReportContent() throws SQLException {
+        clearExistingContent();
+
+        contentLayout.addComponent(new Label("Clicking below will generate a standardized report of all student results in the database.<br>" +
+                "BLAH BLAH BLAH.", ContentMode.HTML));
+        contentLayout.addComponent(new Button("Generate Standardized Report"));
+
+        StreamResource reportResource = new StreamResource(new StreamResource.StreamSource() {
+            @Override
+            public InputStream getStream() {
+
+                File file = null;
+                try {
+
+                    //get student data from database
+                    int numModules = Database.getTotalModules();
+                    double AV = Database.getOverallAverage();
+                    double SD = Database.getOverallStandardDev();
+
+                    try {
+                        jOpenDocument j = new jOpenDocument();
+
+                        // create spreadsheet report for module
+                        file = j.createStandardizedReport(numModules, AV, SD );
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                return ModulesTabSheet.getInputStream(file);
+            }
+        }, "StandardizedReport.ods");
+        FileDownloader reportDownloader = new FileDownloader(reportResource);
+        reportDownloader.extend((AbstractComponent) contentLayout.getComponent(1));
+        root.addComponent(contentLayout);
+    }
+
+    /**
+     * displays details for generating overall report
+     */
+    private void displayGenerateReportContent() throws SQLException {
+        clearExistingContent();
+
+        contentLayout.addComponent(new Label("Clicking below will generate a report of all student results in the database.<br>" +
+                "Data will be displayed for overall grades and grades per module.", ContentMode.HTML));
+        contentLayout.addComponent(new Button("Generate Report"));
+
+        StreamResource reportResource = new StreamResource(new StreamResource.StreamSource() {
+            @Override
+            public InputStream getStream() {
+
+                File file = null;
+                try {
+
+                    //get student data from database
+                    int numModules = Database.getTotalModules();
+
+                    try {
+                        jOpenDocument j = new jOpenDocument();
+
+                        // create spreadsheet report for module
+                        file = j.createOverallReport(numModules);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                return ModulesTabSheet.getInputStream(file);
+            }
+        }, "OverallReport.ods");
+        FileDownloader reportDownloader = new FileDownloader(reportResource);
+        reportDownloader.extend((AbstractComponent) contentLayout.getComponent(1));
         root.addComponent(contentLayout);
     }
 
@@ -280,16 +375,14 @@ public class AdminHomeView extends VerticalLayout implements View {
 
         studentInfo.addComponent(resultsTable);
 
-        String notification;
+        String notification = "System has results for " + totalCredits + " credits for student " + student + ".<br>";
         if (totalCredits < 60) {
-            notification = "System has results for only " + totalCredits + " credits for student " + student + ".<br>" +
-                           "Please ensure all results have been submitted for this student";
+            notification += "Students should be registered for 60 credits.<br>" +
+                            "Please ensure all results have been submitted for this student";
         } else if (totalCredits > 60) {
-            notification = "System has results for " + totalCredits + " credits for student " + student + ".<br>" +
-                           "Students should only be registered for a maximum of 60 credits.<br>" +
-                           "Please check these results again.";
+            notification += "Students should only be registered for a maximum of 60 credits.<br>" +
+                            "Please check these results again.";
         } else { //correct number of credits
-            notification = "System has results for " + totalCredits + " credits for student " + student + ".<br>";
 
             if (creditsFailed == 0) {
                 notification += "Student has passed all modules.";
@@ -314,6 +407,7 @@ public class AdminHomeView extends VerticalLayout implements View {
         studentInfo.addComponent(new Label(notification, ContentMode.HTML));
         studentInfo.addComponent(new Button("Download Report"));
 
+        final String finalNotification = notification;
         StreamResource reportResource = new StreamResource(new StreamResource.StreamSource() {
             @Override
             public InputStream getStream() {
@@ -325,10 +419,10 @@ public class AdminHomeView extends VerticalLayout implements View {
                     ResultSet results = Database.getStudentInfo(student);
 
                     try {
-                        jOpenDocumentCreateTest j = new jOpenDocumentCreateTest();
+                        jOpenDocument j = new jOpenDocument();
 
                         // create spreadsheet report for module
-                        file = j.createStudentReport(student, results);
+                        file = j.createStudentReport(student, results, finalNotification);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

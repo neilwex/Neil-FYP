@@ -31,6 +31,7 @@ public class UserHomeView extends VerticalLayout implements View {
     public void enter(ViewChangeListener.ViewChangeEvent event) {
 
         session = getSession();
+        session.setAttribute("view", UserHomeView.USER_HOME);
 
         try {
             initLayout();
@@ -287,11 +288,6 @@ public class UserHomeView extends VerticalLayout implements View {
         buttons.addComponent(submit);
         buttons.addComponent(cancel);
         form.addComponent(buttons);
-
-        // display whether file will be kept/deleted after archiving
-        String notification = "Your request has been sent to the IT Department who will notify you when archiving has been completed.<br>" +
-                              "You have requested for your selected file to be ... after archiving";
-        Label fileStatusText = new Label(notification, ContentMode.HTML);
 
         // Open window in the UI
         getUI().addWindow(addNewModuleWindow);
