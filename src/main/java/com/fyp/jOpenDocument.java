@@ -399,11 +399,11 @@ public class jOpenDocument {
 
         //create new spreadsheet for report
         final File file = new File("files\\results.ods");
-        SpreadSheet.create(numModules + 1,10,300).saveAs(file);
+        SpreadSheet.create(numModules,10,300).saveAs(file);
 
         ResultSet modules = Database.getList("SELECT DISTINCT(code) AS code FROM modules");
         //fill each sheet with a module
-        int i = 1;
+        int i = 0;
         while (modules.next()) {
             sheet = SpreadSheet.createFromFile(file).getSheet(i);
             String code = modules.getString("code");
@@ -450,7 +450,7 @@ public class jOpenDocument {
 
             // Round percentage to 2 decimal points
             double raw = Double.parseDouble(df.format(rows.getInt("total") * 5.0 / credits));
-            double standardized = Double.parseDouble(df.format(raw + ((raw - av) * OverallSD / (sd + OverallAV))));
+            double standardized = Double.parseDouble(df.format( ((raw - av) * OverallSD / sd ) + OverallAV));
 
             sheet.getCellAt("A" + row).setValue(rows.getString("student_num"));
             sheet.getCellAt("B" + row).setValue(raw);
