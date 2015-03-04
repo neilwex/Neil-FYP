@@ -136,7 +136,7 @@ public class UserLogin extends VerticalLayout implements View {
             // store current user info in the session
             getSession().setAttribute("user", USER_NAME);
             getSession().setAttribute("accountID", USER_ACC_NUM);
-            getSession().setAttribute("accountID", USER_FORENAME);
+            getSession().setAttribute("userForename", USER_FORENAME);
 
             // navigate to desired view
             UI.getCurrent().getNavigator().navigateTo(view);

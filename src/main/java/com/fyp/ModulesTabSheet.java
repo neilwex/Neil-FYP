@@ -114,7 +114,7 @@ public class ModulesTabSheet extends TabSheet {
                             displayUploadWindow(code);
                         }
                     }), 0, 6);
-                    grid.getComponent(0, 6).setWidth("100%");
+                    grid.getComponent(0, 6).setWidth("189px");
 
                     grid.addComponent(new Button("Get Report"), 1, 6);
                     reportResource = createResource(code);

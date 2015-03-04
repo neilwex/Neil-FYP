@@ -259,7 +259,6 @@ public class RetrievingBrowser extends VerticalLayout implements View {
     private void initButtons() {
 
         initSubmitButton();
-        initClearButton();
     }
 
     /**
@@ -329,9 +328,7 @@ public class RetrievingBrowser extends VerticalLayout implements View {
             public void buttonClick(Button.ClickEvent event) {
                 summaryWindow.close();
 
-                if (createAndSendEmail()) {
-                    initConfirmationPopUp();
-                }
+
             }
         });
 
@@ -348,53 +345,6 @@ public class RetrievingBrowser extends VerticalLayout implements View {
 
         // Open pop-up in the UI
         getUI().addWindow(summaryWindow);
-    }
-
-    /**
-     * Sets up the email details and creates an EmailTicket object for sending
-     *
-     * @return      true if the email is successfully sent; otherwise, false
-     */
-    private boolean createAndSendEmail() {
-
-        // set up email ticket to be sent
-        String from = userEmail;
-        String[] to = new String[]{"neil_77@gtest.embl.de"}; //"itsupport@embl.de"
-        String[] cc = new String[]{};
-        String subject = "TEST RETRIEVE TICKET";
-        boolean copyToWebmaster = false;
-        String webmaster = "";
-
-        String emailContent = "Hi,\n\n" +
-                "Please retrieve the following files:\n\n" +
-                filesToBeRetrieved +
-                "\n" +
-                "Have a nice day";
-
-        EmailTicket email = new EmailTicket(from, to, cc, subject, emailContent, copyToWebmaster, webmaster);
-
-        if ( email.prepareAndSendEmail() ) {
-            System.out.println("Email ticket sent");
-            return true;
-
-        } else {
-            Notification.show("Problem with request. Please try again later.");
-            return false;
-        }
-    }
-
-    /**
-     * Listener for clear all button
-     */
-    private void initClearButton() {
-        clearButton.addClickListener(new Button.ClickListener() {
-            @Override
-            public void buttonClick(Button.ClickEvent event) {
-                // deselect all rows and update 'Selected Files' label
-                table.setValue(null);
-                currentlySelected.setValue("No files selected");
-            }
-        });
     }
 
     /**

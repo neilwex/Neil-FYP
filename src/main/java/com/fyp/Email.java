@@ -4,27 +4,24 @@ import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.SimpleEmail;
 
 /**
- * Created by Neil on 27/01/2015.
+ * Created by Neil on 21/02/2015.
  */
-public class EmailTicket {
+public class Email {
 
     private String from;
     private String[] to;
     private String[] cc;
     private String subject;
     private String emailContent;
-    private boolean copyToWebmaster;
     private String webmaster;
 
-    public EmailTicket(String from, String[] to, String[] cc, String subject, String emailContent,
-                       boolean copyToWebmaster, String webmaster) {
+    public Email(String from, String[] to, String[] cc, String subject, String emailContent, String webmaster) {
 
         this.from = from;
         this.to = to;
         this.cc = cc;
         this.subject = subject;
         this.emailContent = emailContent;
-        this.copyToWebmaster = copyToWebmaster;
         this.webmaster = webmaster;
     }
 
@@ -36,7 +33,7 @@ public class EmailTicket {
     public boolean prepareAndSendEmail() {
 
         org.apache.commons.mail.Email email = new SimpleEmail();
-        ///email.setHostName("smtp.embl.de");
+        ///email.setHostName("HOST_NAME_HERE");
         email.setSmtpPort(25);
 
         try
@@ -52,10 +49,6 @@ public class EmailTicket {
             for (String oneCc : cc)
             {
                 email.addCc(oneCc);
-            }
-            if (copyToWebmaster)
-            {
-                email.addBcc(webmaster);
             }
             email.send();
             return true;

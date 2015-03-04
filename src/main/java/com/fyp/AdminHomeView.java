@@ -37,7 +37,7 @@ public class AdminHomeView extends VerticalLayout implements View {
 
     private String VIEW_MODS = "View Modules";
     private String VIEW_STUDENTS = "View Students";
-    private String GEN_REPORT = "Generate Report";
+    private String GEN_REPORT = "Normal Report";
     private String STANDARDIZED_REPORT = "Standarized Report";
     private String VIEW_PENDING = "View Pending Modules";
     private String ADD_USER = "Add User";
