@@ -73,6 +73,7 @@ public class ModulesTabSheet extends TabSheet {
                 grid.setMargin(new MarginInfo(true, false, false, false));
                 grid.setSpacing(true);
                 grid.setWidth(null);
+                grid.setColumnExpandRatio(1,0);
 
                 if (!moduleInfo.getBoolean("approved")) {
                     //module not approved yet, so display warning message
@@ -120,7 +121,7 @@ public class ModulesTabSheet extends TabSheet {
                     reportResource = createResource(code);
                     reportDownloader = new FileDownloader(reportResource);
                     reportDownloader.extend((AbstractComponent) grid.getComponent(1, 6));
-                    //grid.getComponent(1,6).setWidth("131px");
+                    grid.getComponent(1,0).setWidth("300px");
 
                 }
 

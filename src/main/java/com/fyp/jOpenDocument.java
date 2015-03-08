@@ -431,6 +431,11 @@ public class jOpenDocument {
         int credits = moduleDetails.getInt("credit_weighting");
         sheet.setName(code);
 
+        int rawFirst, rawTwoOne, rawTwoTwo, rawThird, rawPass, rawFail;
+        rawFirst = rawTwoOne = rawTwoTwo = rawThird = rawPass = rawFail = 0;
+        int modFirst, modTwoOne, modTwoTwo, modThird, modPass, modFail;
+        modFirst = modTwoOne = modTwoTwo = modThird = modPass = modFail = 0;
+
         sheet.getCellAt("A1").setValue("Module:");
         sheet.getCellAt("B1").setValue(code);
         sheet.getCellAt("A2").setValue("Lecturer");
@@ -456,8 +461,59 @@ public class jOpenDocument {
             sheet.getCellAt("B" + row).setValue(raw);
             sheet.getCellAt("C" + row).setValue(standardized);
 
+            if (raw >= 70) {
+                rawFirst++;
+            } else if (raw >= 60) {
+                rawTwoOne++;
+            } else if (raw >= 50) {
+                rawTwoTwo++;
+            } else if (raw >= 45) {
+                rawThird++;
+            } else if (raw >= 40) {
+                rawPass++;
+            }  else {
+                rawFail++;
+            }
+
+            if (standardized >= 70) {
+                modFirst++;
+            } else if (standardized >= 60) {
+                modTwoOne++;
+            } else if (standardized >= 50) {
+                modTwoTwo++;
+            } else if (standardized >= 45) {
+                modThird++;
+            } else if (standardized >= 40) {
+                modPass++;
+            }  else {
+                modFail++;
+            }
+
             row++;
         }
+
+        // setup column headers
+        sheet.getCellAt("F7").setValue("Awards");
+        sheet.getCellAt("G7").setValue("# Raw");
+        sheet.getCellAt("H7").setValue("# Modified");
+        sheet.getCellAt("F8").setValue("1.1");
+        sheet.getCellAt("G8").setValue(rawFirst);
+        sheet.getCellAt("H8").setValue(modFirst);
+        sheet.getCellAt("F9").setValue("2.1");
+        sheet.getCellAt("G9").setValue(rawTwoOne);
+        sheet.getCellAt("H9").setValue(modTwoOne);
+        sheet.getCellAt("F10").setValue("2.2");
+        sheet.getCellAt("G10").setValue(rawTwoTwo);
+        sheet.getCellAt("H10").setValue(modTwoTwo);
+        sheet.getCellAt("F11").setValue("3.1");
+        sheet.getCellAt("G11").setValue(rawThird);
+        sheet.getCellAt("H11").setValue(modThird);
+        sheet.getCellAt("F12").setValue("Pass");
+        sheet.getCellAt("G12").setValue(rawPass);
+        sheet.getCellAt("H12").setValue(modPass);
+        sheet.getCellAt("F13").setValue("Fail");
+        sheet.getCellAt("G13").setValue(rawFail);
+        sheet.getCellAt("H13").setValue(modFail);
 
         sheet.getSpreadSheet().saveAs(file);
         return file;

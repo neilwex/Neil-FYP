@@ -53,7 +53,7 @@ public class CsvFile {
 
                 // use comma as separator
                 String[] result = line.split(cvsSplitBy);
-                if (result.length == 3 && result[0] != null && result[1] != null && result[2] != null) {
+                if (result.length == 3 && ! result[0].trim().isEmpty() && ! result[1].trim().isEmpty() && ! result[2].trim().isEmpty()) {
 
                     try {
                         // check results are in numeric form
@@ -61,7 +61,7 @@ public class CsvFile {
                         double exam = Double.parseDouble(result[2]);
 
                         //check results are in correct range with module CA/Exam/Credits info
-                        if (ca_percent < 0 || ca > (ca_percent * credits / 5) || exam_percent < 0 || exam > (exam_percent * credits / 5)) {
+                        if (ca < 0 || ca > (ca_percent * credits / 5) || exam < 0 || exam > (exam_percent * credits / 5)) {
                             correctContent = false;
                             break;
                         }

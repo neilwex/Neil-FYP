@@ -65,10 +65,13 @@
   .studentInfo {
     margin-bottom: 20px;
   }
-/*
-  .v-menubar-focus {
-    border: none;
-    padding: 0;
-  }*/
 
+  .v-horizontallayout img {
+    border: 2px solid #7ACAFF;
+    border-radius: 15px;
+  }
+
+  .v-horizontallayout img:hover {
+    border: 2px solid grey;
+  }
 }

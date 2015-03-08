@@ -33,9 +33,11 @@ public class CsvUploader implements Upload.Receiver, Upload.SucceededListener {
         } catch (final java.io.FileNotFoundException e) {
             new Notification("Could not open file<br/>",
                     e.getMessage(), Notification.Type.ERROR_MESSAGE).show(Page.getCurrent());
+
+            new Notification("No file selected! - please select a valid file",
+                    Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
             return null;
         }
-
         return fos; // Return the output stream to write to
     }
 
@@ -51,7 +53,6 @@ public class CsvUploader implements Upload.Receiver, Upload.SucceededListener {
             if (readCsvFileSuccessfully) {
 
                 Notification.show("Selected file contents successfully added to the database");
-
 
             } else {
                 new Notification("Unable to read file contents - please select a valid file",

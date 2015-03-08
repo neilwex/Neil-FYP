@@ -11945,3 +11945,12 @@ div.v-layout.v-horizontal.v-widget {
 .mytheme .studentInfo {
 	margin-bottom: 20px;
 }
+
+.mytheme .v-horizontallayout img {
+	border: 2px solid #7ACAFF;
+	border-radius: 15px;
+}
+
+.mytheme .v-horizontallayout img:hover {
+	border: 2px solid grey;
+}

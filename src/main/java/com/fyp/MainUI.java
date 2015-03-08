@@ -35,8 +35,6 @@ public class MainUI extends UI{
         navigator.addView(UserLogin.LOGIN, UserLogin.class );
         navigator.addView(AdminHomeView.ADMIN_HOME, AdminHomeView.class);
         navigator.addView(UserHomeView.USER_HOME, UserHomeView.class);
-        navigator.addView(RetrievingBrowser.RETRIEVAL_BROWSER, RetrievingBrowser.class);
-        //navigator.addView(TestView.TEST_VIEW, TestView.class);
 
         navigator.addViewChangeListener(new ViewChangeListener() {
             @Override

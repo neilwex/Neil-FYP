@@ -5,10 +5,7 @@ import com.vaadin.data.Property;
 import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
-import com.vaadin.server.FileDownloader;
-import com.vaadin.server.Page;
-import com.vaadin.server.StreamResource;
-import com.vaadin.server.VaadinSession;
+import com.vaadin.server.*;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.*;
@@ -211,8 +208,7 @@ public class AdminHomeView extends VerticalLayout implements View {
     private void displayGenerateReportContent() throws SQLException {
         clearExistingContent();
 
-        contentLayout.addComponent(new Label("Clicking below will generate a report of all student results in the database.<br>" +
-                "Data will be displayed for overall grades and grades per module.", ContentMode.HTML));
+        contentLayout.addComponent(new Label("Click below to generate a report of all student results in the database."));
         contentLayout.addComponent(new Button("Generate Report"));
 
         StreamResource reportResource = new StreamResource(new StreamResource.StreamSource() {
@@ -241,6 +237,31 @@ public class AdminHomeView extends VerticalLayout implements View {
         }, "OverallReport.ods");
         FileDownloader reportDownloader = new FileDownloader(reportResource);
         reportDownloader.extend((AbstractComponent) contentLayout.getComponent(1));
+
+        contentLayout.addComponent(new Label("The generated report will display results per module.<br>" +
+                "An overall breakdown of results is also displayed.<br>" +
+                "Statistics are given percentage grades, GPA equivalent grades, award received (1.1, 2.1 etc.),<br>" +
+                "class ranking as well as module averages, standard deviations and color coded pass/fail displays.", ContentMode.HTML));
+
+        Resource res1 = new ThemeResource("img/ModuleReport.png");
+        final Image image1 = new Image(null, res1);
+        image1.setHeight("200px");
+
+        Resource res2 = new ThemeResource("img/NormalReportImage.png");
+        Image image2 = new Image(null, res2);
+        image2.setHeight("200px");
+
+        image1.addClickListener(new ImageClickListener("img/ModuleReport.png", getUI()));
+        image2.addClickListener(new ImageClickListener("img/NormalReportImage.png", getUI()));
+
+        HorizontalLayout images = new HorizontalLayout();
+        images.setSpacing(true);
+        images.addComponent(image1);
+        images.addComponent(image2);
+        contentLayout.addComponent(images);
+
+
+
         root.addComponent(contentLayout);
     }
 
@@ -274,11 +295,13 @@ public class AdminHomeView extends VerticalLayout implements View {
         studentInfo = new VerticalLayout();
         studentInfo.setSpacing(true);
         studentInfo.addStyleName("studentInfo");
+        final Label onInitialLoad = new Label("Please select a student from the drop box menu to view their results.");
 
         studentSelection.addValueChangeListener(new Property.ValueChangeListener() {
             @Override
             public void valueChange(Property.ValueChangeEvent valueChangeEvent) {
 
+                contentLayout.removeComponent(onInitialLoad);
                 contentLayout.removeComponent(studentInfo);
                 studentInfo.removeAllComponents();
 
@@ -293,8 +316,8 @@ public class AdminHomeView extends VerticalLayout implements View {
         });
 
         studentSelection.setContainerDataSource(studentMenu);
-
         contentLayout.addComponent(studentSelection);
+        contentLayout.addComponent(onInitialLoad);
         root.addComponent(contentLayout);
     }
 
