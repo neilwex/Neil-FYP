@@ -637,7 +637,7 @@ public class Database {
 
         sql = "SELECT code, name, credit_weighting, ca_mark_percentage, final_exam_percentage," +
                 "(CONCAT(users.forename, \" \", users.surname)) AS lecturer " +
-                "FROM modules JOIN users ON modules.accountID = users.accountID  WHERE approved = FALSE;";
+                "FROM modules JOIN users ON modules.accountID = users.accountID WHERE approved = FALSE;";
         ps = conn.prepareStatement(sql);
         return ps.executeQuery();
     }
@@ -698,7 +698,7 @@ public class Database {
         setupConnection();
         System.out.println("Calling method getTotalModules...");
 
-        sql = "SELECT COUNT(DISTINCT code) AS numMods FROM modules";
+        sql = "SELECT COUNT(DISTINCT code) AS numMods FROM modules WHERE approved = TRUE";
         ps = conn.prepareStatement(sql);
         rs = ps.executeQuery();
         rs.next();

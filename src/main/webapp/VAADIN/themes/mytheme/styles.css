@@ -11954,3 +11954,11 @@ div.v-layout.v-horizontal.v-widget {
 .mytheme .v-horizontallayout img:hover {
 	border: 2px solid grey;
 }
+
+.mytheme .v-accordion-item-open .v-accordion-item-caption {
+	background: #7ACAFF;
+}
+
+.mytheme .v-accordion-item-open .v-accordion-item-caption .v-caption {
+	font-weight: bold;
+}

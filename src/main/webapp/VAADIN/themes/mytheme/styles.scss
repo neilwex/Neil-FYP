@@ -74,4 +74,13 @@
   .v-horizontallayout img:hover {
     border: 2px solid grey;
   }
+
+  .v-accordion-item-open .v-accordion-item-caption {
+    background: #7ACAFF;
+  }
+
+  .v-accordion-item-open .v-accordion-item-caption .v-caption {
+    font-weight: bold;
+  }
+
 }

@@ -24,7 +24,7 @@ public class jOpenDocument {
 
     public File createOverallReport(int numMods) throws SQLException, IOException {
 
-        ResultSet modules = Database.getList("SELECT DISTINCT(code) AS code FROM modules");
+        ResultSet modules = Database.getList("SELECT DISTINCT(code) AS code FROM modules WHERE approved = TRUE");
         ResultSet results = Database.getAllResults();
 
         //create new spreadsheet for report
@@ -36,7 +36,7 @@ public class jOpenDocument {
         sheet.setName("Overview");
         fillOverviewReport(file, sheet, modules, results);
 
-        modules = Database.getList("SELECT DISTINCT(code) AS code FROM modules");
+        modules = Database.getList("SELECT DISTINCT(code) AS code FROM modules WHERE approved = TRUE");
         results = Database.getAllResults();
 
         //fill the second sheet with an colour coded table of students results for every module
@@ -44,7 +44,7 @@ public class jOpenDocument {
         sheet.setName("Colour Graph");
         fillColorCodedReport(file, sheet, modules, results);
 
-        ResultSet numModules = Database.getList("SELECT DISTINCT(code) AS code FROM modules");
+        ResultSet numModules = Database.getList("SELECT DISTINCT(code) AS code FROM modules WHERE approved = TRUE");
         //fill each sheet with a module
         int i = 2;
         while (numModules.next()) {
@@ -401,7 +401,7 @@ public class jOpenDocument {
         final File file = new File("files\\results.ods");
         SpreadSheet.create(numModules,10,300).saveAs(file);
 
-        ResultSet modules = Database.getList("SELECT DISTINCT(code) AS code FROM modules");
+        ResultSet modules = Database.getList("SELECT DISTINCT(code) AS code FROM modules WHERE approved = TRUE");
         //fill each sheet with a module
         int i = 0;
         while (modules.next()) {

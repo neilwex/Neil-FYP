@@ -167,8 +167,7 @@ public class AdminHomeView extends VerticalLayout implements View {
     private void displayStandarizedReportContent() throws SQLException {
         clearExistingContent();
 
-        contentLayout.addComponent(new Label("Clicking below will generate a standardized report of all student results in the database.<br>" +
-                "BLAH BLAH BLAH.", ContentMode.HTML));
+        contentLayout.addComponent(new Label("Click below to generate a standardized report of all student results in the database."));
         contentLayout.addComponent(new Button("Generate Standardized Report"));
 
         StreamResource reportResource = new StreamResource(new StreamResource.StreamSource() {
@@ -199,6 +198,23 @@ public class AdminHomeView extends VerticalLayout implements View {
         }, "StandardizedReport.ods");
         FileDownloader reportDownloader = new FileDownloader(reportResource);
         reportDownloader.extend((AbstractComponent) contentLayout.getComponent(1));
+
+        contentLayout.addComponent(new Label("Standardized results aim to reflect the module and year mean results.<br>" +
+                "Standardized results do not modify the underlying database results; they are merely for viewing purposes.<br>" +
+                "The standardized (modified) results are obtained from the following formula:", ContentMode.HTML));
+
+        Resource standard = new ThemeResource("img/standardization.png");
+        Image standardizationImage = new Image(null, standard);
+        standardizationImage.setHeight("100px");
+        contentLayout.addComponent(standardizationImage);
+
+        contentLayout.addComponent(new Label("mm = modified mark<br>" +
+                                             "rm = raw (original) mark<br>" +
+                                             "X̄ = module (sample) mean<br>" +
+                                             "s = module (sample) standard deviation<br>" +
+                                             "σ = overall (population) standard deviation<br>" +
+                                             "μ = overall (population) mean<br>", ContentMode.HTML));
+
         root.addComponent(contentLayout);
     }
 
@@ -486,7 +502,7 @@ public class AdminHomeView extends VerticalLayout implements View {
 
         // accordian component for displaying pending modules
         Accordion accordion = new Accordion();
-        accordion.setWidth("595px");
+        accordion.setWidth("500px");
         contentLayout.addComponent(accordion);
 
         ResultSet pendingModules =null;
@@ -532,8 +548,10 @@ public class AdminHomeView extends VerticalLayout implements View {
                 grid.addComponent(new Label("Lecturer:"));
                 grid.addComponent(new Label(lecturer));
 
-                grid.getComponent(0,0).setWidth("100px");
-                grid.getComponent(1,0).setWidth("400px");
+                //grid.getComponent(0,0).setWidth("100px");
+                //grid.getComponent(1,0).setWidth("400px");
+                grid.setColumnExpandRatio(1,0);
+                grid.getComponent(1,0).setWidth("300px");
 
                 grid.addComponent(new Button("Approve", new Button.ClickListener() {
                     @Override
